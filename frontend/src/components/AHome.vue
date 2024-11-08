@@ -113,7 +113,7 @@ export default {
     },
     addService() {
       // Navigate to add service page
-      this.$router.push({ name: 'add-service' });
+      this.$router.push("/addservices");
     },
     editService(serviceId) {
       // Navigate to edit service page

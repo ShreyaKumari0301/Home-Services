@@ -3,6 +3,8 @@ from instance.database import db
 from instance.api import api
 from application.config import Config
 from werkzeug.security import generate_password_hash
+from flask_jwt_extended import JWTManager
+
 from flask_cors import CORS
 from application.models import User
 
@@ -13,7 +15,9 @@ def create_app():
     db.init_app(app)
     api.init_app(app)
     CORS(app)
+    JWTManager(app)
     return app
+
 
 
 def initialise_database():
@@ -27,15 +31,23 @@ def initialise_database():
 
             # Admin Account
             admin_email = input("Enter Admin Email Address: ")
-            admin_password = input("Create a password for Admin: ")
+            admin_password = input("Create an Admin password: ")
             hashed_password = generate_password_hash(admin_password)
+            # admin_mob = input("Enter Admin mobile number: ")
+            # admin_add = input("Enter Admin address: ")
+            # admin_pin = input("Enter Admin pin code: ")
+
 
             admin_profile = User(
                 name='Admin',
                 email=admin_email,
                 password=hashed_password,
-                role="Admin"
+                role="Admin",
+                mobile_number="None",
+                address="None",
+                pincode="None"
             )
+        
             
             # Adding roles and admin user to the database
             try:

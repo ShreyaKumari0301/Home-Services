@@ -1,0 +1,532 @@
+app.vue
+<template>
+<div class = 'container'>
+  <div class = 'row'>
+    <div class = "col-md-12">
+      <div>
+        <router-view></router-view>
+      </div>
+    </div>
+  </div>
+</div>
+</template>
+
+<script>
+import USignup from './components/USignup.vue'
+export default {
+  name: 'App',
+  components: {
+    USignup
+  }
+}
+</script>
+
+
+
+
+
+models.py
+
+from datetime import datetime
+from instance.database import db
+
+# User table with roles
+from sqlalchemy import CheckConstraint
+
+class Person(db.Model):
+    __tablename__ = 'persons'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False)
+    email = db.Column(db.String(50), unique=True, nullable=False)
+    password = db.Column(db.String(20), nullable=False)
+    date_joined = db.Column(db.DateTime, default=db.func.current_timestamp())
+    pincodes = db.Column(db.String(100), nullable=True)  # Comma-separated list, up to 10 pincodes
+    #__table_args__ = (CheckConstraint("length(split_part(pincodes, ',', 10)) <= 10", name="max_10_pincodes"),)
+
+class User(Person):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, db.ForeignKey('persons.id'), primary_key=True)
+    role = db.Column(db.String(20), default='user', nullable=False)
+    address = db.Column(db.String(255), nullable=True)  # Comma-separated list for multiple addresses
+
+class Professional(Person):
+    __tablename__ = 'professionals'
+    id = db.Column(db.Integer, db.ForeignKey('persons.id'), primary_key=True)
+    service_category = db.Column(db.String(50), nullable=True)
+    ratings = db.Column(db.Float, nullable=True)
+    experience = db.Column(db.Integer, nullable=True)
+    aadhar_card = db.Column(db.String(12), unique=True, nullable=True)  # Assuming 12-digit Aadhar card
+    document = db.Column(db.LargeBinary, nullable=True)  # Add file size validation in form handling
+
+'''class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False)
+    email = db.Column(db.String(50), unique=True, nullable=False)
+    password = db.Column(db.String(20), nullable=False)
+    #address = db.Column(db.String(100),nullable = False)
+    role = db.Column(db.String(20), nullable=False)
+    created = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+class Professional(db.Model):
+    __tablename__ = 'professionals'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    name = db.Column(db.String(50), nullable=False)
+    service_type = db.Column(db.String(50))
+    experience = db.Column(db.Integer)
+
+    # Define the relationship with Service
+    services = db.relationship('Service', back_populates='professional')
+'''
+class Service(db.Model):
+    __tablename__ = 'services'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    #professional_id = db.Column(db.Integer, db.ForeignKey('professionals.id'), nullable=False)
+    base_price = db.Column(db.Float, nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    category = db.Column(db.String(50))
+    time_required = db.Column(db.String(50))
+    approval_status = db.Column(db.String(20), default='Pending')
+    #total_orders = db.Column(db.Integer, default=0)
+    avg_rating = db.Column(db.Float, default=0.0)
+
+    # Establish relationship with Professional
+    #professional = db.relationship('Professional', back_populates='services')
+    
+# Service Request table with relationships to User, Professional, and Service
+class ServiceRequest(db.Model):
+    __tablename__ = 'service_requests'
+    id = db.Column(db.Integer, primary_key=True)
+    service_id = db.Column(db.Integer, db.ForeignKey('services.id'), nullable=False)  # Foreign key to Service
+    customer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)  # Customer ID (User table)
+    professional_id = db.Column(db.Integer, db.ForeignKey('professionals.id'), nullable=False)  # Assigned Professional
+
+    date_of_request = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(20), default='Requested')  # E.g., 'Requested', 'Assigned', 'Completed', 'Closed'
+    rating = db.Column(db.Float, nullable=True)
+    comments = db.Column(db.Text, nullable=True)
+
+
+fetchservices
+
+'class FetchService(Resource):
+    def get(self, id=None):
+        if id:
+            print("Received GET request for service ID:", id)
+            service = Service.query.filter_by(id=id).first()
+            if not service:
+                print("Service not found with ID:", id)
+                return jsonify({"error": "Service not found"}), 404
+            result = {
+                "id": service.id,
+                "name": service.name,
+                "base_price": service.base_price,
+                "description": service.description,
+                "category": service.category,
+                "time_required": service.time_required,
+                "approval_status": service.approval_status,
+                "avg_rating": service.avg_rating
+            }
+            #print("Fetched service successfully with ID:", id)
+            return jsonify(result), 200
+        else:
+            #print("Received GET request for all services")
+            services = Service.query.all()
+            result = [{
+                "id": service.id,
+                "name": service.name,
+                "base_price": service.base_price,
+                "description": service.description,
+                "category": service.category,
+                "time_required": service.time_required,
+                "approval_status": service.approval_status,
+                "avg_rating": service.avg_rating
+            } for service in services]
+            
+            print("Fetched all services successfully")
+            return jsonify(result), 200
+
+
+
+
+
+records.vue
+<template>
+  <div class="records-page">
+    <h2>Scheduled Bookings</h2>
+    <div v-for="booking in scheduledBookings" :key="booking.id" class="booking-item">
+      <p>Service: {{ booking.serviceName }}</p>
+      <p>Date: {{ booking.date }}</p>
+      <p>Professional: {{ booking.professionalName }} - {{ booking.professionalRating }}★</p>
+      <p>Contact: {{ booking.professionalPhone }}</p>
+    </div>
+
+    <h2>Past Bookings</h2>
+    <div v-for="booking in pastBookings" :key="booking.id" class="booking-item">
+      <p>Service: {{ booking.serviceName }}</p>
+      <p>Date: {{ booking.date }}</p>
+      <div>
+        <label>Rating:</label>
+        <input type="number" v-model="booking.rating" max="5" min="1" />
+        <textarea v-model="booking.review" placeholder="Leave a review"></textarea>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      scheduledBookings: [], // Populate from API
+      pastBookings: [], // Populate from API
+    };
+  },
+};
+</script>
+
+
+<template>
+  <div class="records">
+    <h2>Your Bookings</h2>
+    <div v-for="booking in bookings" :key="booking.id" class="booking-card">
+      <h3>{{ booking.service.name }}</h3>
+      <p>Booked Date: {{ booking.booking_date | formatDate }}</p>
+      <p>Status: {{ booking.status }}</p>
+
+      <!-- For Future or Assigned Bookings -->
+      <div v-if="booking.status === 'Requested' || booking.status === 'Assigned'" class="action-buttons">
+        <button @click="previewBooking(booking)">Preview</button>
+        <button @click="rescheduleBooking(booking)">Reschedule</button>
+        <button @click="cancelBooking(booking)">Cancel</button>
+      </div>
+
+      <!-- For Completed Bookings -->
+      <div v-else-if="booking.status === 'Completed'" class="action-buttons">
+        <button @click="previewBooking(booking)">Preview</button>
+        <button v-if="showRatingOption(booking.booking_date)" @click="rateBooking(booking)">Rate</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+
+summmary
+<template>
+  <div class="summary-page">
+    <h2>Summary</h2>
+    <p>Requested Jobs: {{ jobStats.requested }}</p>
+    <p>Closed Jobs: {{ jobStats.closed }}</p>
+    <p>Ongoing Jobs: {{ jobStats.ongoing }}</p>
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      jobStats: { requested: 0, closed: 0, ongoing: 0 },
+    };
+  },
+  mounted() {
+    // Fetch job stats from API
+  },
+};
+</script>
+
+
+service req
+'''def post(self):
+        data = request.get_json()
+        
+        if not data.get('service_id') or not data.get('user_id') or not data.get('professional_id'):
+            return {'message': 'Missing required fields'}, 400
+
+        try:
+            booking_date = datetime.strptime(data['booking_date'], '%Y-%m-%d %H:%M')
+        except ValueError:
+            return {'message': 'Invalid booking date format. Use YYYY-MM-DD HH:MM'}, 400
+
+        if booking_date.hour < 7 or booking_date.hour > 19:
+            return {'message': 'Booking time must be between 7 AM and 7 PM'}, 400
+
+        service_request = ServiceRequest(
+            service_id=data['service_id'],
+            user_id=data['user_id'],
+            professional_id=data['professional_id'],
+            date_of_request=datetime.utcnow(),
+            booking_date=booking_date,
+            status='Requested'
+        )
+        
+        db.session.add(service_request)
+        db.session.commit()
+        
+        return {'message': 'Service request created successfully'}, 201'''
+
+
+        '''def get(self, request_id=None):
+        """Get a specific service request by ID or a list of all service requests if ID is not provided."""
+        if request_id:
+            service_request = ServiceRequest.query.get(request_id)
+            if service_request:
+                return jsonify(self.format_service_request(service_request))
+            return {'message': 'Service request not found'}, 404
+        else:
+            service_requests = ServiceRequest.query.all()
+            return jsonify([self.format_service_request(sr) for sr in service_requests])
+'''
+
+'''def put(self, request_id):
+        """Update an existing service request by ID."""
+        data = request.get_json()
+        service_request = ServiceRequest.query.get(request_id)
+        
+        if not service_request:
+            return {'message': 'Service request not found'}, 404
+
+        try:
+            # Update booking date if provided and validate
+            if 'booking_date' in data:
+                booking_date_str = data.get('booking_date')
+                booking_date = datetime.strptime(booking_date_str, '%Y-%m-%d %H:%M')
+                
+                if booking_date > datetime.now() + timedelta(days=2):
+                    return {'message': 'Booking can only be updated up to 2 days in advance.'}, 400
+                
+                service_request.booking_date = booking_date
+
+            # Update other fields if provided
+            service_request.status = data.get('status', service_request.status)
+            service_request.rating = data.get('rating', service_request.rating)
+            service_request.comments = data.get('comments', service_request.comments)
+
+            db.session.commit()
+            return {'message': 'Service request updated successfully'}, 200
+        except ValueError as ve:
+            return {'message': f'Invalid date format: {ve}'}, 400
+        except Exception as e:
+            return {'message': str(e)}, 500
+'''
+
+
+'''class ServiceRequestAPI(Resource):
+    def get(self, request_id=None):
+        if request_id is None:
+            # Return a list of all service requests
+            service_requests = ServiceRequest.query.all()
+            return [{'id': req.id, 'service_id': req.service_id, 'user_id': req.user_id,
+                     'professional_id': req.professional_id, 'status': req.status,
+                     'booking_date': req.booking_date.isoformat()} for req in service_requests], 200
+        else:
+            # Return a specific service request by ID
+            service_request = ServiceRequest.query.get(request_id)
+            if not service_request:
+                return {'message': 'Service request not found'}, 404
+            return {'id': service_request.id, 'service_id': service_request.service_id,
+                    'user_id': service_request.user_id, 'professional_id': service_request.professional_id,
+                    'status': service_request.status, 'booking_date': service_request.booking_date.isoformat()}, 200
+
+    def post(self):
+        # Handle creation of a new service request
+        data = request.get_json()
+        try:
+            booking_date = datetime.strptime(data['booking_date'], '%Y-%m-%d %H:%M')
+        except ValueError:
+            return {'message': 'Invalid booking date format. Use YYYY-MM-DD HH:MM'}, 400
+
+        if booking_date.hour < 7 or booking_date.hour > 19:
+            return {'message': 'Booking time must be between 7 AM and 7 PM'}, 400
+
+        service_request = ServiceRequest(
+            service_id=data['service_id'],
+            user_id=data['user_id'],
+            professional_id=data['professional_id'],
+            date_of_request=datetime.utcnow(),
+            booking_date=booking_date,
+            status='Requested'
+        )
+        
+        db.session.add(service_request)
+        db.session.commit()
+        
+        return {'message': 'Service request created successfully'}, 201
+
+    def put(self, request_id):
+        # Update a specific service request
+        service_request = ServiceRequest.query.get(request_id)
+        if not service_request:
+            return {'message': 'Service request not found'}, 404
+
+        data = request.get_json()
+        if 'status' in data:
+            service_request.status = data['status']
+        if 'rating' in data:
+            service_request.rating = data['rating']
+        if 'comments' in data:
+            service_request.comments = data['comments']
+
+        db.session.commit()
+        return {'message': 'Service request updated successfully'}, 200
+
+    def delete(self, request_id):
+        service_request = ServiceRequest.query.get(request_id)
+        if not service_request:
+            return {'message': 'Service request not found'}, 404
+        
+        db.session.delete(service_request)
+        db.session.commit()
+        return {'message': 'Service request deleted successfully'}, 200
+
+class ServiceRequestAPI(Resource):
+    def post(self):
+        data = request.get_json()
+        
+        # Validate required fields
+        if not all(key in data for key in ('service_id', 'user_id', 'professional_id', 'rating', 'comments')):
+            return {'message': 'Missing required fields'}, 400
+
+        try:
+            new_request = ServiceRequest(
+                service_id=data['service_id'],
+                user_id=data['user_id'],
+                professional_id=data['professional_id'],
+                date_of_request=datetime.now(),
+                status=data.get('status', 'Requested'),
+                rating=data['rating'],
+                comments=data['comments']
+            )
+            
+            db.session.add(new_request)
+            db.session.commit()
+            
+            return {'message': 'Service request created successfully'}, 201
+        except Exception as e:
+            db.session.rollback()
+            return {'message': str(e)}, 500
+
+    def get(self, request_id=None):
+        if request_id:
+            # Fetch specific request
+            request_obj = ServiceRequest.query.get(request_id)
+            if request_obj:
+                return jsonify(request_obj.as_dict())
+            else:
+                return {'message': 'Service request not found'}, 404
+        else:
+            # Fetch all requests
+            requests = ServiceRequest.query.all()
+            return jsonify([req.as_dict() for req in requests])
+
+    def put(self, request_id):
+        data = request.get_json()
+        request_obj = ServiceRequest.query.get(request_id)
+        
+        if not request_obj:
+            return {'message': 'Service request not found'}, 404
+
+        # Update fields if they are in the request payload
+        if 'status' in data:
+            request_obj.status = data['status']
+        if 'rating' in data:
+            request_obj.rating = data['rating']
+        if 'comments' in data:
+            request_obj.comments = data['comments']
+        
+        db.session.commit()
+        return {'message': 'Service request updated successfully'}
+
+    def delete(self, request_id):
+        request_obj = ServiceRequest.query.get(request_id)
+        
+        if not request_obj:
+            return {'message': 'Service request not found'}, 404
+        
+        db.session.delete(request_obj)
+        db.session.commit()
+        return {'message': 'Service request deleted successfully'}'''
+
+
+
+
+'''
+class AddService(Resource):
+    def post(self):
+        data = request.get_json()
+        new_service = Service(
+        name=data.get('name'),
+        base_price=data.get('base_price'),
+        description=data.get('description'),
+        category=data.get('category'),
+        time_required=data.get('time_required'),
+        approval_status=data.get('approval_status', 'Pending'),
+        avg_rating=data.get('avg_rating', 0)
+    )
+        db.session.add(new_service)
+        db.session.commit()
+        return ({"message": "Service created"}), 201
+    
+class DelService(Resource):
+    def delete(self,id):
+        service = Service.query.get(id)
+        if service:
+            db.session.delete(service)
+            db.session.commit()
+            return ({"message": "Service deleted"}), 200
+        return ({"message": "Service not deleted"}), 404
+
+class UpdService(Resource):
+    def put(self,id):
+        service = Service.query.get(id)
+        data = request.get_json()
+        if not service:
+            return {"message": "Service not found"}, 404
+        data = request.get_json()
+        service.name = data.get('name', service.name)
+        service.base_price = data.get('base_price', service.base_price)
+        service.description = data.get('description', service.description)
+        service.category = data.get('category', service.category)
+        service.time_required = data.get('time_required', service.time_required)
+        service.approval_status = data.get('approval_status', service.approval_status)
+        service.avg_rating = data.get('avg_rating', service.avg_rating)
+        db.session.commit()
+        return {"message": "Service updated"}, 200
+       
+class FetchService(Resource):
+    def get(self, id=None):
+        if id:
+            service = Service.query.get(id)
+            if not service:
+                return {"error": "Service not found"}, 404
+            return {
+                "id": service.id,
+                "name": service.name,
+                "base_price": service.base_price,
+                "description": service.description,
+                "category": service.category,
+                "time_required": service.time_required,
+                "approval_status": service.approval_status,
+                "avg_rating": service.avg_rating
+            }, 200
+        services = Service.query.all()
+        return [{
+            "id": service.id,
+            "name": service.name,
+            "base_price": service.base_price,
+            "description": service.description,
+            "category": service.category,
+            "time_required": service.time_required,
+            "approval_status": service.approval_status,
+            "avg_rating": service.avg_rating
+        } for service in services], 200
+
+class ProRegistrationAPI(Resource):
+    data = request.get_json()
+    if data.get('email') and data.get('')
+
+
+class ProLoginAPI(Resource):
+    data = request.get_json()
+'''

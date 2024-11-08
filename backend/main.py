@@ -1,9 +1,8 @@
 import os
 from instance.app import app
 from dotenv import load_dotenv
-from utils.configuration import create_app
+from utils.configuration import create_app , initialise_database 
 from flask import Flask, request, jsonify
-from utils.configuration import initialise_database
 import api
 
 import api
@@ -18,7 +17,7 @@ initialise_database()
 
 @app.route("/")
 def home():
-    return '<h1>Backend server Status : Running.</h1> <br> <a href="http://localhost:8080/">Click here to Access the frontend.</a>'
+    return '<h1>Backend server Status : Running.</h1> <br> <a href="http://localhost:5173/">Click here to Access the frontend.</a>'
 
 
 if __name__ == '__main__':

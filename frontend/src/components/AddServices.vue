@@ -52,7 +52,7 @@ export default {
     methods: {
         async handleAddService() {
             try {
-                const response = await axios.post('http://127.0.0.1:5000/addservices', {
+                const response = await axios.post('http://127.0.0.1:5000/services', {
                     name: this.name,
                     base_price: this.base_price,
                     description: this.description,
@@ -60,14 +60,10 @@ export default {
                     time_required: this.time_required,
                     avg_rating: this.avg_rating
                 });
+                console.log("Service added successfully", response.data);
                 alert("Service added successfully");
-                // Clear the form
-                this.name = "";
-                this.base_price = "";
-                this.description = "";
-                this.category = "";
-                this.time_required = "";
-                this.avg_rating = "";
+                this.$router.push('/admin');
+
             } catch (error) {
                 console.error("Failed to add service", error);
                 alert("Failed to add service");

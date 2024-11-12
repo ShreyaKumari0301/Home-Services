@@ -1,122 +1,116 @@
 <template>
-  <div id="app">
-    <h1>{{name}}</h1>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <a class="navbar-brand" href="#">Home Services</a>
-      <div class="collapse navbar-collapse">
-        <ul class="navbar-nav mr-auto">
-          <li class="nav-item active">
-            <a class="nav-link" href="#">Home</a>
-          </li>
-          <li class="nav-item dropdown">
-            <a
-              class="nav-link dropdown-toggle"
-              href="#"
-              id="categoryDropdown"
-              role="button"
-              data-toggle="dropdown"
-              aria-haspopup="true"
-              aria-expanded="false"
-            >
-              Categories
-            </a>
-            <div class="dropdown-menu" aria-labelledby="categoryDropdown">
-              <a
-                v-for="cat in categories"
-                :key="cat"
-                class="dropdown-item"
-                href="#"
-                @click="selectCategory(cat)"
-              >
-                {{ cat }}
-              </a>
-            </div>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">Summary</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">Add to Cart</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">Records</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">Profile</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="#">Logout</a>
-          </li>
-        </ul>
-         
-        <form class="form-inline my-2 my-lg-0">
-          <input
-            class="form-control mr-sm-2"
-            type="search"
-            placeholder="Search"
-            aria-label="Search"
-          />
-          <button class="btn btn-outline-success my-2 my-sm-0" type="submit">
-            Search
-          </button>
-         
-        </form>
-      </div>
-    </nav>
+  <div>
+    <div class="top-bar">
+      <h2>User Dashboard</h2>
+      <input v-model="searchQuery" placeholder="Search services..." @input="filterServices" />
+      <select v-model="selectedCategory" @change="filterServices">
+        <option value="">All Categories</option>
+        <option v-for="category in categories" :key="category" :value="category">{{ category }}</option>
+      </select>
+      <button @click="navigateTo('UHome')">Home</button>
+      <button @click="navigateTo('UCart')">Cart</button>
+      <button @click="navigateTo('UOrders')">Orders</button>
+      <button @click="navigateTo('UProfile')">Profile</button>
+      <button @click="navigateTo('USummary')">Summary</button>
+      <button @click="logout">Logout</button>
+
+    </div>
     
-    <div class="container">
-      <!-- Render router views or specific components here -->
-      <router-view />
+    <div class="services-section">
+      <h3>Services</h3>
+      <table class="services-table" v-if="filteredServices.length > 0">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Base Price</th>
+            <th>Category</th>
+            <th>Time Required</th>
+            <th>Avg Rating</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="service in filteredServices" :key="service.id">
+            <td>{{ service.name }}</td>
+            <td>{{ service.base_price }}</td>
+            <td>{{ service.category }}</td>
+            <td>{{ service.time_required }}</td>
+            <td>{{ service.avg_rating }}</td>
+ <div v-if="service.quantity > 0">
+        <button @click="decrementQuantity(service)">-</button>
+        <span>{{ service.quantity }}</span>
+        <button @click="incrementQuantity(service)">+</button>
+      </div>
+
+      <button v-else @click="addToCart(service)">Add</button>
+          </tr>
+        </tbody> 
+      </table>
+      <div v-else>
+        <p>No services found</p>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import axios from "axios";
+import axios from 'axios';
 
 export default {
-  name: "UHome",
   data() {
     return {
-      categories: [],
-      name: "Shreya",
+      searchQuery: '',
+      selectedCategory: '',
+      categories: ['Cleaning', 'Plumbing', 'Electrical'], // Example categories, dynamically load if needed
+      services: [],
+      filteredServices: []
     };
   },
   methods: {
-    async fetchCategories() {
-      try {
-        const token = localStorage.getItem("token");
-        const auth_token = `Bearer ${token}`;
-        const config = {
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': auth_token
-            }
-          }
-        const response = await axios.get("http://127.0.0.1:5000/categories", config)
-        this.categories = response.data.categories;
-      } catch (error) {
-        console.error("Error fetching categories:", error);
+    addToCart(service) {
+      service.quantity = 1;
+    },
+    incrementQuantity(service) {
+      service.quantity += 1;
+    },
+    decrementQuantity(service) {
+      if (service.quantity > 1) {
+        service.quantity -= 1;
+      } else {
+        service.quantity = 0;
       }
     },
-    selectCategory(category) {
-      // Handle category selection
-      console.log(`Selected category: ${category}`);
+  logout(){
+      localStorage.clear()
+      this.$router.push("/login")
     },
+    async fetchServices() {
+      try {
+        const response = await axios.get('http://127.0.0.1:5000/services');
+        this.services = response.data;
+        this.filterServices();
+      } catch (error) {
+        console.error('Error fetching services:', error);
+      }
+    },
+    filterServices() {
+      this.filteredServices = this.services.filter((service) =>
+        service.name.toLowerCase().includes(this.searchQuery.toLowerCase()) &&
+        (this.selectedCategory ? service.category === this.selectedCategory : true)
+      );
+    },
+    
+   
+    navigateTo(page) {
+      this.$router.push({ name: page });
+    },
+    logout() {
+      localStorage.removeItem('token');
+      this.$router.push({ name: 'login' });
+    }
   },
   mounted() {
-    if (localStorage.getItem("token")) {
-      // User is logged in, fetch categories
-      this.fetchCategories();
-    } else {
-      // Redirect to login page
-      this.$router.push("/login");
-    }
-    
-  },
+    this.fetchServices();
+  }
 };
 </script>
-
-<style>
-/* Global styles */
-</style>

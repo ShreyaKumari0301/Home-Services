@@ -530,3 +530,872 @@ class ProRegistrationAPI(Resource):
 class ProLoginAPI(Resource):
     data = request.get_json()
 '''
+
+
+
+
+<template>
+  <div class="home-container">
+    <!-- Top Bar with Welcome Message, Search Box, Category Filter, and Buttons -->
+    <div class="top-bar">
+      <div class="welcome-message">
+        <h2>Welcome Admin</h2>
+      </div>
+      <div class="search-container">
+        <input
+          type="text"
+          v-model="searchQuery"
+          placeholder="Search..."
+          class="search-box"
+        />
+      </div>
+      <div class="category-filter">
+        <select v-model="selectedCategory" @change="filterServices" class="category-dropdown">
+          <option value="">Filter by Category</option>
+          <option v-for="category in categories" :key="category.id" :value="category.id">
+            {{ category.name }}
+          </option>
+        </select>
+      </div>
+      <div class="buttons-container">
+        <button @click="navigateTo('home')">Home</button>
+        <button @click="navigateTo('professional')">Professional</button>
+        <button @click="navigateTo('summary')">Summary</button>
+        <button @click="logout">Logout</button>
+      </div>
+    </div>
+
+    <!-- Services Table -->
+    <div class="services-section">
+      <h3>Services</h3>
+      <table class="services-table" v-if="filteredServices.length === 0">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Base Price</th>
+            <th>Category</th>
+            <th>Time Required</th>
+            <th>Avg Rating</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="service in filteredServices" :key="service.id">
+            <td>{{ service.name }}</td>
+            <td>{{ service.base_price }}</td>
+            <td>{{ service.category }}</td>
+            <td>{{service.time_required}}</td>
+            <td>{{service.avg_rating}}</td>
+            <td>
+              <button @click="editService(service.id)">Edit</button>
+              <button @click="deleteService(service.id)">Delete</button>
+            </td>
+          </tr>
+        </tbody> 
+      </table>
+      <table v-else>
+            <td colspan="4">No services found</td>
+      </table>
+    </div>
+
+    <!-- Add Category and Add Service Options -->
+    <div class="add-options">
+      <button class="add-button" @click="addCategory">Add Category</button>
+      <button class="add-button" @click="addService">Add Service</button>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      searchQuery: '',
+      selectedCategory: '',
+      categories: [],
+      services: [], // Array to hold services fetched from backend
+      filteredServices: [], // Filtered services based on search and category
+    };
+  },
+  methods: {
+    async fetchServices() {
+      try {
+        const response = await this.$axios.get('http://127.0.0.1:5000/services');
+        console.log(response.data);
+        this.services = response.data;
+        console.log("hello",this.services);
+        this.filteredServices = this.services; // Initially display all services
+        console.log("heldddlo",this.filteredServices);
+      } catch (error) {
+        console.error('Error fetching services:', error);
+      }
+    },
+    filterServices() {
+      this.filteredServices = this.services.filter((service) => {
+        return (
+          service.name.toLowerCase().includes(this.searchQuery.toLowerCase()) &&
+          (this.selectedCategory ? service.category === this.selectedCategory : true)
+        );
+      });
+    },
+    navigateTo(page) {
+      this.$router.push({ name: page });
+    },
+    logout() {
+      // Add your logout functionality here
+      this.$router.push({ name: 'login' });
+    },
+    
+    addService() {
+      // Navigate to add service page
+      this.$router.push("/addservices");
+    },
+    editService(serviceId) {
+      // Navigate to edit service page
+      this.$router.push({ name: 'edit-service', params: { id: serviceId } });
+    },
+    deleteService(serviceId) {
+      // Implement delete functionality
+      this.$axios.delete(`http://127.0.0.1:5000/services/${serviceId}`)
+        .then(() => {
+          this.fetchServices(); // Refresh services list
+          this.$toast.success('Service deleted successfully');
+        })
+        .catch((error) => {
+          console.error('Error deleting service:', error);
+          this.$toast.error('Failed to delete service');
+        });
+    },
+  },
+  mounted() {
+    this.fetchServices();
+  },
+};
+</script>
+
+<style scoped>
+.home-container {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+/* Top Bar Styles */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.welcome-message h2 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.search-container {
+  flex: 1;
+  margin-right: 20px;
+}
+
+.search-box {
+  width: 100%;
+  padding: 8px;
+  font-size: 14px;
+}
+
+.category-filter {
+  margin-right: 20px;
+}
+
+.category-dropdown {
+  padding: 8px;
+  font-size: 14px;
+}
+
+.buttons-container {
+  display: flex;
+  gap: 10px;
+}
+
+.buttons-container button {
+  padding: 10px 15px;
+  font-size: 14px;
+  cursor: pointer;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+}
+
+.buttons-container button:hover {
+  background-color: #0056b3;
+}
+
+/* Services Section Styles */
+.services-section {
+  margin-top: 20px;
+}
+
+.services-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.services-table th,
+.services-table td {
+  padding: 10px;
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+.services-table th {
+  background-color: #f4f4f4;
+}
+
+.services-table td button {
+  margin-right: 5px;
+  padding: 5px 10px;
+  font-size: 14px;
+  cursor: pointer;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 5px;
+}
+
+.services-table td button:hover {
+  background-color: #218838;
+}
+
+.add-options {
+  margin-top: 20px;
+}
+
+.add-button {
+  padding: 10px 20px;
+  font-size: 14px;
+  cursor: pointer;
+  background-color: #17a2b8;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  margin-right: 10px;
+}
+
+.add-button:hover {
+  background-color: #138496;
+}
+</style>
+
+
+
+
+
+
+
+AHOME
+<template>
+  <div class="services-section">
+    <h3>Services</h3>
+    <table class="services-table" v-if="filteredServices.length > 0">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Base Price</th>
+          <th>Category</th>
+          <th>Time Required</th>
+          <th>Avg Rating</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="service in filteredServices" :key="service.id">
+          <td>{{ service.name }}</td>
+          <td>{{ service.base_price }}</td>
+          <td>{{ service.category }}</td>
+          <td>{{ service.time_required }}</td>
+          <td>{{ service.avg_rating }}</td>
+          <td>
+            <button @click="editservices(service.id)">Edit</button>
+            <button @click="deleteService(service.id)">Delete</button>
+          </td>
+        </tr>
+      </tbody> 
+    </table>
+    <div v-else>
+      <p>No services found</p>
+    </div>
+  </div>
+</template>
+
+<script>
+import axios from 'axios';
+
+export default {
+  data() {
+    return {
+      searchQuery: '',
+      selectedCategory: '',
+      categories: [],
+      services: [], // Array to hold services fetched from backend
+      filteredServices: [], // Filtered services based on search and category
+    };
+  },
+  methods: {
+    async fetchServices() {
+      try {
+        const response = await axios.get('http://127.0.0.1:5000/services');
+        this.services = response.data;
+        this.filterServices(); // Update filteredServices based on the fetched services
+      } catch (error) {
+        console.error('Error fetching services:', error);
+      }
+    },
+    filterServices() {
+      this.filteredServices = this.services.filter((service) => {
+        return (
+          service.name.toLowerCase().includes(this.searchQuery.toLowerCase()) &&
+          (this.selectedCategory ? service.category === this.selectedCategory : true)
+        );
+      });
+    },
+    navigateTo(page) {
+      this.$router.push({ name: page });
+    },
+    logout() {
+      localStorage.removeItem('token');
+      this.$router.push({ name: 'login' });
+    },
+    addService() {
+      this.$router.push("/addservices");
+    },
+    editservices(serviceId) {
+      this.$router.push({ name: 'editservices', params: { id: serviceId } });
+    },
+    async deleteService(serviceId) {
+      try {
+        await axios.delete(`http://127.0.0.1:5000/services/${serviceId}`);
+        this.fetchServices(); // Refresh services list
+        this.$toast.success('Service deleted successfully');
+      } catch (error) {
+        console.error('Error deleting service:', error);
+        this.$toast.error('Failed to delete service');
+      }
+    },
+  },
+  mounted() {
+    this.fetchServices();
+  },
+};
+</script>
+ ahome with addservice option
+
+ <template>
+  <div>
+    <div class="top-bar">
+      <h2>Admin Dashboard</h2>
+      <input v-model="searchQuery" placeholder="Search services..." @input="filterServices" />
+      <select v-model="selectedCategory" @change="filterServices">
+        <option value="">All Categories</option>
+        <option v-for="category in categories" :key="category" :value="category">{{ category }}</option>
+      </select>
+      <button @click="navigateTo('AHome')">Home</button>
+      <button @click="navigateTo('summary')">Summary</button>
+      <button @click="logout">Logout</button>
+    </div>
+    
+    <div class="services-section">
+      <button @click="addService">Add Service</button>
+      <h3>Services</h3>
+      <table class="services-table" v-if="filteredServices.length > 0">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Base Price</th>
+            <th>Category</th>
+            <th>Time Required</th>
+            <th>Avg Rating</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="service in filteredServices" :key="service.id">
+            <td>{{ service.name }}</td>
+            <td>{{ service.base_price }}</td>
+            <td>{{ service.category }}</td>
+            <td>{{ service.time_required }}</td>
+            <td>{{ service.avg_rating }}</td>
+            <td>
+              <button @click="editService(service.id)">Edit</button>
+              <button @click="deleteService(service.id)">Delete</button>
+            </td>
+          </tr>
+        </tbody> 
+      </table>
+      <div v-else>
+        <p>No services found</p>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import axios from 'axios';
+
+export default {
+  data() {
+    return {
+      searchQuery: '',
+      selectedCategory: '',
+      categories: ['Cleaning', 'Plumbing', 'Electrical'], // Example categories, dynamically load if needed
+      services: [],
+      filteredServices: []
+    };
+  },
+  methods: {
+    async fetchServices() {
+      try {
+        const response = await axios.get('http://127.0.0.1:5000/services');
+        this.services = response.data;
+        this.filterServices();
+      } catch (error) {
+        console.error('Error fetching services:', error);
+      }
+    },
+    filterServices() {
+      this.filteredServices = this.services.filter((service) =>
+        service.name.toLowerCase().includes(this.searchQuery.toLowerCase()) &&
+        (this.selectedCategory ? service.category === this.selectedCategory : true)
+      );
+    },
+    addService() {
+      this.$router.push("/addservices");
+    },
+    editService(serviceId) {
+      this.$router.push({ name: 'editservices', params: { id: serviceId } });
+    },
+    async deleteService(serviceId) {
+      try {
+        await axios.delete(`http://127.0.0.1:5000/services/${serviceId}`);
+        this.fetchServices();
+        alert('Service deleted successfully');
+      } catch (error) {
+        console.error('Error deleting service:', error);
+      }
+    },
+    navigateTo(page) {
+      this.$router.push({ name: page });
+    },
+    logout() {
+      localStorage.removeItem('token');
+      this.$router.push({ name: 'login' });
+    }
+  },
+  mounted() {
+    this.fetchServices();
+  }
+};
+</script>
+
+
+
+working AHome.vue
+
+<template>
+  <div id="app">
+    <h1>{{name}}</h1>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <a class="navbar-brand" href="#">Home Services</a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item active">
+            <a class="nav-link" href="#">Home</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a
+              class="nav-link dropdown-toggle"
+              href="#"
+              id="categoryDropdown"
+              role="button"
+              data-toggle="dropdown"
+              aria-haspopup="true"
+              aria-expanded="false"
+            >
+              Categories
+            </a>
+            <div class="dropdown-menu" aria-labelledby="categoryDropdown">
+              <a
+                v-for="cat in categories"
+                :key="cat"
+                class="dropdown-item"
+                href="#"
+                @click="selectCategory(cat)"
+              >
+                {{ cat }}
+              </a>
+            </div>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Summary</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Add to Cart</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Records</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Profile</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Logout</a>
+          </li>
+        </ul>
+         
+        <form class="form-inline my-2 my-lg-0">
+          <input
+            class="form-control mr-sm-2"
+            type="search"
+            placeholder="Search"
+            aria-label="Search"
+          />
+          <button class="btn btn-outline-success my-2 my-sm-0" type="submit">
+            Search
+          </button>
+         
+        </form>
+      </div>
+    </nav>
+    
+    <div class="container">
+      <!-- Render router views or specific components here -->
+      <router-view />
+    </div>
+  </div>
+</template>
+
+<script>
+import axios from "axios";
+
+export default {
+  name: "UHome",
+  data() {
+    return {
+      categories: [],
+      name: "Shreya",
+    };
+  },
+  methods: {
+    async fetchCategories() {
+      try {
+        const token = localStorage.getItem("token");
+        const auth_token = `Bearer ${token}`;
+        const config = {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': auth_token
+            }
+          }
+        const response = await axios.get("http://127.0.0.1:5000/categories", config)
+        this.categories = response.data.categories;
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    },
+    selectCategory(category) {
+      // Handle category selection
+      console.log(`Selected category: ${category}`);
+    },
+  },
+  mounted() {
+    if (localStorage.getItem("token")) {
+      // User is logged in, fetch categories
+      this.fetchCategories();
+    } else {
+      // Redirect to login page
+      this.$router.push("/login");
+    }
+    
+  },
+};
+</script>
+
+<style>
+/* Global styles */
+</style>
+
+
+        async fetchServiceDetails() {
+            try {
+                const response = await axios.get(`http://127.0.0.1:5000/services/${this.id}`);
+                const data = response.data;
+                this.name = data.name;
+                this.base_price = data.base_price;
+                this.description = data.description;
+                this.category = data.category;
+                this.time_required = data.time_required;
+                this.avg_rating = data.avg_rating;
+            } catch (error) {
+                console.error("Failed to fetch service details", error);
+                alert("Failed to load service details.");
+            }
+        },
+        async updateService() {
+            try {
+                await axios.put(`http://127.0.0.1:5000/services/${this.id}`, {
+                    name: this.name,
+                    base_price: this.base_price,
+                    description: this.description,
+                    category: this.category,
+                    time_required: this.time_required,
+                    avg_rating: this.avg_rating,
+                });
+                alert("Service updated successfully");
+                this.$router.push("/admin");
+            } catch (error) {
+                console.error("Failed to update service", error);
+                alert("Failed to update service");
+            }
+        },
+
+
+workin UHome
+<template>
+  <div id="app">
+    <h1>Hello, {{ name }}</h1>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <a class="navbar-brand" href="#">Home Services</a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item active">
+            <a class="nav-link" href="#">Home</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a
+              class="nav-link dropdown-toggle"
+              href="#"
+              id="categoryDropdown"
+              role="button"
+              data-toggle="dropdown"
+              aria-haspopup="true"
+              aria-expanded="false"
+            >
+              Categories
+            </a>
+            <div class="dropdown-menu" aria-labelledby="categoryDropdown">
+              <a
+                v-for="cat in categories"
+                :key="cat"
+                class="dropdown-item"
+                href="#"
+                @click="selectCategory(cat)"
+              >
+                {{ cat }}
+              </a>
+            </div>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Summary</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Add to Cart</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Records</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Profile</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" @click="logout">Logout</a>
+          </li>
+        </ul>
+
+        <form class="form-inline my-2 my-lg-0" @submit.prevent="filterServices">
+          <input
+            v-model="searchQuery"
+            class="form-control mr-sm-2"
+            type="search"
+            placeholder="Search"
+            aria-label="Search"
+          />
+          <button class="btn btn-outline-success my-2 my-sm-0" type="submit">
+            Search
+          </button>
+        </form>
+      </div>
+    </nav>
+
+    <div class="container" v-for="service in filteredServices" :key="service.id">     
+      <h4>{{ service.name }}</h4>
+      <h5>{{ service.base_price }}</h5>
+      <h5>{{ service.category }}</h5>
+      <h5>{{ service.time_required }}</h5>
+      <h5>{{ service.avg_rating }}</h5>
+    </div>
+  </div>
+</template>
+
+<script>
+import axios from "axios";
+
+export default {
+  name: "UHome",
+  data() {
+    return {
+      categories: ["Cleaning", "Plumbing", "Electrical"],
+      services: [],
+      filteredServices: [],
+      selectedCategory: null,
+      searchQuery: "",
+      name: ""
+    };
+  },
+  methods: {
+    logout() {
+      localStorage.clear();
+      this.$router.push("/login");
+    },
+    filterServices() {
+      this.filteredServices = this.services.filter(service =>
+        service.name.toLowerCase().includes(this.searchQuery.toLowerCase()) &&
+        (this.selectedCategory ? service.category === this.selectedCategory : true)
+      );
+    },
+    async fetchCategories() {
+      try {
+        const token = localStorage.getItem("token");
+        const auth_token = `Bearer ${token}`;
+        const config = {
+          headers: {
+            Authorization: auth_token
+          }
+        };
+        const response = await axios.get("http://127.0.0.1:5000/categories", config);
+        this.categories = response.data.categories;
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    },
+    selectCategory(category) {
+      this.selectedCategory = category;
+      this.filterServices();
+    },
+    async fetchServices() {
+      try {
+        const response = await axios.get("http://127.0.0.1:5000/services");
+        this.services = response.data;
+        this.filterServices();
+      } catch (error) {
+        console.error("Error fetching services:", error);
+      }
+    }
+  },
+  mounted() {
+    const token = localStorage.getItem("token");
+    const name = localStorage.getItem("name");
+    this.name = JSON.parse(name || "{}");
+
+    if (token) {
+      this.fetchCategories();
+      this.fetchServices();
+    } else {
+      this.$router.push("/login");
+    }
+  }
+};
+</script>
+
+<style>
+/* Global styles */
+</style>
+
+
+UCart.vue<template>
+  <div class="ucart">
+    <h2>Your Cart</h2>
+    <div v-if="cartItems.length">
+      <div v-for="(item, index) in cartItems" :key="index" class="cart-item">
+        <h3>{{ item.name }}</h3>
+        <p>{{ item.description }}</p>
+        <p>Price: Rs. {{ item.base_price }}</p>
+        
+        <div>
+          <label>Quantity: </label>
+          <input type="number" v-model.number="item.quantity" @change="updateTotal" min="1" />
+        </div>
+        <p>Subtotal: Rs. {{ item.base_price * item.quantity }}</p>
+      </div>
+      <hr />
+       <div>
+    <h3>Choose a Date</h3>
+    <input type="date" v-model="selectedDate" :min="today" :max="maxDate" />
+
+    <h3>Choose a Time Slot</h3>
+    <select v-model="selectedTime">
+      <option v-for="hour in hours" :key="hour" :value="hour">{{ hour }}:00</option>
+    </select>
+
+    <button @click="placeOrder">Place Order</button>
+  </div>
+  <hr />
+      <div class="charges">
+        <p>Hygiene Charges: Rs. 39</p>
+        <p>Total: Rs. {{ calculateTotal() }}</p>
+      </div>
+    </div>
+    <div v-else>
+      <p>Your cart is empty.</p>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      selectedDate: '',
+      selectedTime: '07',
+      today: new Date().toISOString().split('T')[0],
+      maxDate: new Date(new Date().setDate(new Date().getDate() + 2)).toISOString().split('T')[0],
+      hours: [...Array(13).keys()].map(i => i + 7)  // Generates hours from 7 to 19 (7 AM to 7 PM)
+    };
+  },
+  methods: {
+    async placeOrder() {
+      const bookingDateTime = `${this.selectedDate} ${this.selectedTime}:00`;
+      const payload = {
+        service_id: this.serviceId,
+        user_id: this.userId,
+        professional_id: this.professionalId,
+        booking_date: bookingDateTime,
+      };
+
+      const response = await axios.post('/service_requests', payload);
+      if (response.status === 201) {
+        alert('Order placed successfully!');
+        this.$router.push({ name: 'Records' });
+      } else {
+        alert(response.data.message || 'An error occurred while placing the order.');
+      }
+    }
+  }
+};
+</script>
+
+
+<style scoped>
+.ucart {
+  max-width: 600px;
+  margin: 0 auto;
+}
+.cart-item {
+  margin-bottom: 20px;
+}
+.charges {
+  font-weight: bold;
+  text-align: right;
+}
+</style>
+

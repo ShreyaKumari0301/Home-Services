@@ -56,12 +56,12 @@ class Service(db.Model):
     __tablename__ = 'services'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    professional_id = db.Column(db.Integer, db.ForeignKey('professionals.id'), nullable=False)
+    # professional_id = db.Column(db.Integer, db.ForeignKey('professionals.id'), nullable=False)
     base_price = db.Column(db.Float, nullable=False)
     description = db.Column(db.Text, nullable=True)
     category = db.Column(db.String(50))
     time_required = db.Column(db.String(50))
-    approval_status = db.Column(db.String(20), default='Pending')
+    # approval_status = db.Column(db.String(20), default='Pending')
     #total_orders = db.Column(db.Integer, default=0)
     avg_rating = db.Column(db.Float, default=0.0)
 

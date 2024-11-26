@@ -13,9 +13,8 @@
       <button @click="navigateTo('UProfile')">Profile</button>
       <button @click="navigateTo('USummary')">Summary</button>
       <button @click="logout">Logout</button>
-
     </div>
-    
+
     <div class="services-section">
       <h3>Services</h3>
       <table class="services-table" v-if="filteredServices.length > 0">
@@ -36,15 +35,11 @@
             <td>{{ service.category }}</td>
             <td>{{ service.time_required }}</td>
             <td>{{ service.avg_rating }}</td>
- <div v-if="service.quantity > 0">
-        <button @click="decrementQuantity(service)">-</button>
-        <span>{{ service.quantity }}</span>
-        <button @click="incrementQuantity(service)">+</button>
-      </div>
-
-      <button v-else @click="addToCart(service)">Add</button>
+            <td>
+              <button @click="goToCart(service.id)">Add to Cart</button>
+            </td>
           </tr>
-        </tbody> 
+        </tbody>
       </table>
       <div v-else>
         <p>No services found</p>
@@ -54,43 +49,34 @@
 </template>
 
 <script>
-import axios from 'axios';
+import axios from "axios";
 
 export default {
   data() {
     return {
-      searchQuery: '',
-      selectedCategory: '',
-      categories: ['Cleaning', 'Plumbing', 'Electrical'], // Example categories, dynamically load if needed
+      searchQuery: "",
+      selectedCategory: "",
+      categories: [], // Will be dynamically loaded from the backend
       services: [],
-      filteredServices: []
+      filteredServices: [],
     };
   },
   methods: {
-    addToCart(service) {
-      service.quantity = 1;
-    },
-    incrementQuantity(service) {
-      service.quantity += 1;
-    },
-    decrementQuantity(service) {
-      if (service.quantity > 1) {
-        service.quantity -= 1;
-      } else {
-        service.quantity = 0;
-      }
-    },
-  logout(){
-      localStorage.clear()
-      this.$router.push("/login")
-    },
     async fetchServices() {
       try {
-        const response = await axios.get('http://127.0.0.1:5000/services');
+        const response = await axios.get("http://127.0.0.1:5000/services");
         this.services = response.data;
         this.filterServices();
       } catch (error) {
-        console.error('Error fetching services:', error);
+        console.error("Error fetching services:", error);
+      }
+    },
+    async fetchCategories() {
+      try {
+        const response = await axios.get("http://127.0.0.1:5000/categories");
+        this.categories = response.data;
+      } catch (error) {
+        console.error("Error fetching categories:", error);
       }
     },
     filterServices() {
@@ -99,18 +85,38 @@ export default {
         (this.selectedCategory ? service.category === this.selectedCategory : true)
       );
     },
-    
-   
+    goToCart(serviceId) {
+      if (serviceId) {
+        this.$router.push({ 
+          name: 'UCart', 
+          params: { serviceId: serviceId.toString() } 
+    });
+    }},
     navigateTo(page) {
       this.$router.push({ name: page });
     },
     logout() {
-      localStorage.removeItem('token');
-      this.$router.push({ name: 'login' });
-    }
+      localStorage.clear();
+      alert("Logged out successfully.");
+      this.$router.push("/login");
+    },
   },
   mounted() {
-    this.fetchServices();
-  }
+    const token = localStorage.getItem("token");
+    const userrole = localStorage.getItem("userrole");
+
+    if (token) {
+      if (userrole === "User") {
+        this.fetchServices();
+        this.fetchCategories();
+      } else if (userrole === "Admin") {
+        this.$router.push("/admin");
+      } else {
+        this.$router.push("/professional");
+      }
+    } else {
+      this.$router.push("/login");
+    }
+  },
 };
 </script>

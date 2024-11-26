@@ -3,7 +3,7 @@
         <div class="form-container">
             <h3>Edit Service</h3>
             <hr />
-            <form @submit.prevent="updateService">
+            <form @submit.prevent="editService">
                 <div class="form-group">
                     <label>Name</label>
                     <input type="text" v-model="service.name" class="form-control" placeholder="Enter service name" required />
@@ -14,87 +14,88 @@
                 </div>
                 <div class="form-group">
                     <label>Description</label>
-                    <textarea v-model="service.description" class="form-control" placeholder="Enter service description" ></textarea>
+                    <textarea v-model="service.description" class="form-control" placeholder="Enter service description"></textarea>
                 </div>
                 <div class="form-group">
                     <label>Category</label>
-                    <input type="text" v-model="service.category" class="form-control" placeholder="Enter category"  />
+                    <input type="text" v-model="service.category" class="form-control" placeholder="Enter category" />
                 </div>
                 <div class="form-group">
                     <label>Time Required (mins)</label>
-                    <input type="number" v-model="service.time_required" class="form-control" placeholder="Enter time required"/>
+                    <input type="number" v-model="service.time_required" class="form-control" placeholder="Enter time required" />
                 </div>
                 <div class="form-group">
                     <label>Average Rating</label>
-                    <input type="number" step="0.1" min="0" max="5" v-model="service.avg_rating" class="form-control" placeholder="Enter average rating"  />
+                    <input type="number" step="0.1" min="0" max="5" v-model="service.avg_rating" class="form-control" placeholder="Enter average rating" />
                 </div>
                 <button type="submit" class="submit-btn">Update Service</button>
             </form>
         </div>
     </div>
 </template>
-<script>
-import axios from "axios";
 
+<script>
+import axios from 'axios';
 export default {
-    name: "UpdateService",
+    name: 'EditService',
     data() {
         return {
-            // id: null,
-            name: "",
-            base_price: "",
-            description: "",
-            category: "",
-            time_required: "",
-            avg_rating: "",
+        name: "",
+        base_price: "",
+        description: "",
+        category: "",
+        time_required: "",
+        avg_rating: "",
         };
     },
-    methods: {
-        async fetchServiceDetails() {
-             let token = localStorage.getItem("Auth-Token");
-                let tokenValue = JSON.parse(token || null);
-                let authValue = "Bearer "+tokenValue
-                const id = this.$route.params.id
-                const data = {
-                    id :id,
-                    name: this.service.name,
-                    base_price: this.service.base_price,
-                    description: this.service.description,
-                    category: this.service.category,
-                    time_required: this.service.time_required,
-                    avg_rating: this.service.avg_rating,
-                };
-                const response = await axios.get('http://127.0.0.1:5000/services', data, {
-                    headers: {'Authorization': authValue}});
-                if (response.status == 200) {
-                    alert(response.data.message)
-                    console.log(response)
-                    this.$router.push('/admin')
-                }
-    },
-    async mounted(){
-        let token = localStorage.getItem("token");
-        let tokenValue = JSON.parse(token || null);
-        let authValue = "Bearer "+tokenValue
-        if (token){
-            const response = await axios.get('http://127.0.0.1:5000/services'+this.id, {
-                headers: {'Authorization': authValue}});
-            const id = this.$route.params.id;
-            const service = result.data.services.find(service => service.id == id);
-            this.service.name = service.name;
-            this.service.base_price = service.base_price;
-            this.service.description = service.description;
-            this.service.category = service.category;
-            this.service.time_required = service.time_required;
-            this.service.avg_rating = service.avg_rating;
-            console.log(result)
+    
+  methods: {
+    async EditService() {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("Unauthorized. Please log in.");
+          this.$router.push("/login");
+          return;
+        }
+        const response = await axios.put(
+          "http://127.0.0.1:5000/adminservice",
+          {
+            name: this.name,
+            base_price: this.base_price,
+            description: this.description,
+            category: this.category,
+            time_required: this.time_required,
+            avg_rating: this.avg_rating,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-        }
+        console.log("Service updated successfully:", response.data);
+        alert("Service updated successfully");
+        this.resetForm();
+        this.$router.push("/admin");
+      } catch (error) {
+        console.error("Failed to updated service:", error);
+        alert(error.response?.data?.message || "Failed to update service.");
+      }
     },
-        
-        }
+    resetForm() {
+      this.name = "";
+      this.base_price = "";
+      this.description = "";
+      this.category = "";
+      this.time_required = "";
+      this.avg_rating = "";
+    },
+  },
 };
 </script>
+
 
 <style scoped>
 body {

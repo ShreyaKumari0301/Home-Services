@@ -81,7 +81,7 @@ export default {
   methods: {
     async fetchBookings() {
       try {
-        const response = await axios.get('/api/service_requests');
+        const response = await axios.get('http://127.0.0.1:5000/service_requests');
         const bookings = response.data;
         this.assignedBookings = bookings.filter(b => b.status === 'Assigned' || b.status === 'Requested');
         this.completedBookings = bookings.filter(b => b.status === 'Completed');

@@ -1,0 +1,437 @@
+<template>
+  <div>
+    <header>
+      <h2>Hello, {{ name }}</h2>
+      <div>
+        <input type="text" v-model="search" placeholder="Search services..." />
+        <select v-model="selectedCategory">
+          <option value="">All Categories</option>
+          <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+        </select>
+        <button @click="logout">Logout</button>
+      </div>
+    </header>
+
+    <div v-for="(services, category) in categorizedServices" :key="category">
+      <h3>{{ category }}</h3>
+      <div v-for="service in services" :key="service.id">
+        <h4>{{ service.name }}</h4>
+        <p>{{ service.description }}</p>
+        <button @click="addToCart(service.id)">Add to Cart</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import axios from 'axios';
+
+export default {
+  data() {
+    return {
+      name: "User",
+      services: [],
+      search: "",
+      selectedCategory: "",
+      categories: [],
+      filteredServices: [],
+    };
+  },
+  computed: {
+    categorizedServices() {
+      const grouped = {};
+      this.filteredServices.forEach((service) => {
+        if (!grouped[service.category]) {
+          grouped[service.category] = [];
+        }
+        grouped[service.category].push(service);
+      });
+      return grouped;
+    },
+  },
+  methods: {
+    async fetchServices() {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get("http://127.0.0.1:5000/api/services", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        this.services = response.data;
+        this.filterServices();
+        this.categories = [...new Set(this.services.map((s) => s.category))];
+      } catch (error) {
+        console.error("Error fetching services:", error);
+        alert("Failed to load services. Please try again.");
+        if (error.response && error.response.status === 401) {
+          this.logout();
+        }
+      }
+    },
+    filterServices() {
+      this.filteredServices = this.services.filter(
+        (service) =>
+          service.name.toLowerCase().includes(this.search.toLowerCase()) &&
+          (this.selectedCategory
+            ? service.category === this.selectedCategory
+            : true)
+      );
+    },
+    addToCart(serviceId) {
+      this.$router.push(`/ucart/${serviceId}`);
+    },
+    logout() {
+      localStorage.clear();
+      alert("Logged out successfully.");
+      this.$router.push(`/login`);
+    },
+    navigateTo(page) {
+      this.$router.push({ name: page });
+    },
+  },
+  mounted() {
+    const token = localStorage.getItem("token");
+    const userRole = localStorage.getItem("userrole");
+    if (token) {
+      if (userRole === "User") {
+        this.fetchServices();
+      } else if (userRole === "Admin") {
+        this.$router.push("/admin");
+      } else {
+        this.$router.push("/professional");
+      }
+    } else {
+      this.$router.push("/login");
+    }
+  },
+};
+</script>
+
+
+
+
+
+
+
+
+
+
+
+<------------ucart------------------------>
+<template>
+  <div>
+    <h2>Services in Your Cart</h2>
+    <div v-if="cartItems.length">
+      <div v-for="item in cartItems" :key="item.id" class="cart-item">
+        <p>{{ item.name }} - Quantity: {{ item.quantity }}</p>
+        <p>Price per unit: {{ item.base_price }} Rs</p>
+        <p>Subtotal: {{ item.quantity * item.base_price }} Rs</p>
+      </div>
+      <div>
+        <h3>Total Cost: {{ totalCost }} Rs</h3>
+      </div>
+    </div>
+    
+    <div v-else>
+      <p>No items in your cart.</p>
+    </div>
+
+    <div v-if="cartItems.length">
+      <h3>Booking Details</h3>
+      <form @submit.prevent="placeOrder">
+        <label>Select Booking Date:</label>
+        <input type="date" v-model="bookingDate" />
+        
+        <label>Select Time Slot:</label>
+        <div class="time-slots">
+          <button type="button" v-for="slot in timeSlots" :key="slot" @click="selectTimeSlot(slot)">
+            {{ slot }}
+          </button>
+        </div>
+
+        <h4>Selected Slot: {{ selectedTimeSlot }}</h4>
+        
+        <button type="submit" :disabled="!selectedTimeSlot || !bookingDate">Place an Order</button>
+      </form>
+    </div>
+  </div>
+</template>
+
+<script>
+import axios from 'axios';
+
+export default {
+  data() {
+    return {
+      cartItems: [],
+      bookingDate: '',
+      timeSlots: ["7:00 AM", "9:00 AM", "11:00 AM", "1:00 PM", "3:00 PM", "5:00 PM"],
+      selectedTimeSlot: '',
+      totalCost: 0
+    };
+  },
+  methods: {
+    selectTimeSlot(slot) {
+      this.selectedTimeSlot = slot;
+    },
+    calculateTotalCost() {
+      this.totalCost = this.cartItems.reduce((total, item) => total + item.quantity * item.base_price, 0);
+    },
+    updateLocalStorage() {
+      localStorage.setItem('cart', JSON.stringify(this.cartItems));
+    },
+    async placeOrder() {
+      try {
+        // Get the JWT token from local storage
+        const token = localStorage.getItem("Auth-Token");
+        const tokenValue = JSON.parse(token || null);
+        const authValue = "Bearer " + tokenValue;
+
+        // Gather necessary data from the cart and the form
+        const orderData = this.cartItems.map((item) => ({
+          service_id: item.id,
+          booking_date: this.bookingDate,
+          time_slot: this.selectedTimeSlot,
+          quantity: item.quantity,
+          total_price: item.quantity * item.base_price
+        }));
+
+        const data = {
+          services: orderData,
+          user_id: this.user_id // Assuming the token contains the user_id
+        };
+
+        // Make the API request to place the order
+        const response = await axios.post('http://127.0.0.1:5000/place_order', data, {
+          headers: { 'Authorization': authValue }
+        });
+
+        // Display the success message
+        alert(response.data.message);
+
+        // Clear the cart and update the local storage
+        this.cartItems = [];
+        this.updateLocalStorage();
+        this.calculateTotalCost();
+        console.log("all good")
+      } catch (error) {
+        console.error('Error placing order:', error);
+      }
+    }
+  },
+  async mounted() {
+    // Retrieve the cart items from local storage
+    this.cartItems = JSON.parse(localStorage.getItem('cart')) || [];
+    this.calculateTotalCost();
+
+    // Check if the cart is empty and display an alert
+    if (!this.cartItems.length) {
+      alert('Your cart is empty. Please add items before proceeding.');
+      return;
+    }
+
+    // Retrieve the JWT token from local storage
+    const token = localStorage.getItem("Auth-Token");
+    const authValue = "Bearer " + token;
+
+    // Check if the user is authenticated
+    if (token) {
+      try {
+        // Fetch the user details from the backend
+        const response = await axios.get(`http://127.0.0.1:5000/uhome`, {
+          headers: { 'Authorization': authValue }
+        });
+        this.user_id = response.data.user_id;
+        console.log('Authenticated User:', response.data);
+      } catch (error) {
+        console.error('Error fetching user details:', error);
+        alert('An error occurred. Please try again later.');
+      }
+    } else {
+      alert('Please login first.');
+    }
+  }
+};
+</script>
+
+
+  
+     
+  
+
+<style scoped>
+.cart-item {
+  border-bottom: 1px solid #ddd;
+  padding: 10px 0;
+}
+.time-slots button {
+  margin: 5px;
+  padding: 5px 10px;
+}
+</style>
+
+
+
+
+
+
+
+
+
+
+
+<template>
+  <div class="cart-container">
+    <h2>Add Service to Cart</h2>
+    
+    <div v-if="service" class="service-details">
+      <h3>{{ service.name }}</h3>
+      
+      <div class="quantity-section">
+        <label>Quantity:</label>
+        <input 
+          type="number" 
+          v-model.number="quantity" 
+          min="1" 
+          @change="calculateTotalPrice"
+        />
+      </div>
+      
+      <div class="booking-date-section">
+        <label>Booking Date:</label>
+        <div class="date-options">
+          <button 
+            v-for="(date, index) in bookingDates" 
+            :key="index"
+            @click="selectBookingDate(date)"
+            :class="{ selected: selectedBookingDate === date }"
+          >
+            {{ date }}
+          </button>
+        </div>
+      </div>
+        <div class="time-slot-section">
+        <label>Time Slot:</label>
+        <div class="time-slots">
+          <button 
+            v-for="slot in timeSlots" 
+            :key="slot"
+            @click="selectTimeSlot(slot)"
+            :class="{ 'selected': selectedTimeSlot === slot }"
+          >
+            {{ slot }}
+          </button>
+        </div>
+      </div>
+      <div class="price-section">
+        <p>Base Price: {{ service.base_price }}</p>
+        <p>Total Price: {{ totalPrice }}</p>
+      </div>
+      
+      <button 
+        @click="addToCart" 
+        :disabled="!isFormValid"
+      >
+        Confirm Service Request
+      </button>
+    </div>
+    
+    <div v-else>
+      <p>Loading service details...</p>
+    </div>
+  </div>
+</template>
+
+<script>
+import axios from 'axios';
+
+export default {
+  data() {
+    return {
+      service: null,
+      quantity: 1,
+      totalPrice: 0,
+      selectedDate: null,
+      selectedTimeSlot: null,
+      bookingDates: [],
+      timeSlots: [
+        '9:00 AM', '10:00 AM', '11:00 AM', 
+        '12:00 PM', '1:00 PM', '2:00 PM', 
+        '3:00 PM', '4:00 PM', '5:00 PM'
+      ]
+    };
+  },
+  computed: {
+     isFormValid() {
+      return this.service && 
+             this.quantity > 0 && 
+             this.selectedDate && 
+             this.selectedTimeSlot;
+    }
+  },
+  methods: {
+    calculateTotalPrice() {
+      if (this.service) {
+        this.totalPrice = this.service.base_price * this.quantity;
+      }
+    },
+      generateBookingDates() {
+      const today = new Date();
+      this.bookingDates = [
+        this.formatDate(today),
+        this.formatDate(new Date(today.getTime()+24*60*60*1000)),
+        this.formatDate(new Date(today.getTime()+2*24*60*60*1000)),
+      ];
+    },
+    formatDate(date) {
+      return date.toISOString().split('T')[0];
+    },
+  
+    selectBookingDate(date) {
+      this.selectedDate = date;
+    },
+    selectTimeSlot(slot) {
+      this.selectedTimeSlot = slot;
+    },
+     async addToCart() {
+      try {
+        const customerId = localStorage.getItem('userId');
+        
+        const serviceRequestData = {
+          service_id: this.service.id,
+          email: localStorage.getItem('email'),
+          booking_date: this.selectedDate,
+          time_slot: this.selectedTimeSlot,
+          quantity: this.quantity,
+          total_price: this.totalPrice,
+          service_pincode: '' 
+        };
+        console.log("helll");
+          const response = await axios.post('http://127.0.0.1:5000/service-requests', serviceRequestData);
+          alert('Service request added successfully!');
+          this.$router.push('/');
+        // this.$router.push('/orders');
+      } catch (error) {
+        console.error('Error adding service request:', error);
+        alert('Failed to add service request. Please try again later.');
+      }
+    }
+  },
+  mounted() {
+    async fetchServiceDetails() {
+      try {
+        const serviceId = this.$route.params.serviceId;
+        const email = localStorage.getItem('email');
+        const response = await axios.get(`http://127.0.0.1:5000/services/${serviceId}`);
+        this.service = response.data;
+        this.calculateTotalPrice();
+      } catch (error) {
+        console.error('Error fetching service details:', error);
+        this.$router.push('/services');
+      }
+    },
+    this.generateBookingDates();
+  }
+}
+</script>

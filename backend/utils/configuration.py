@@ -15,7 +15,7 @@ def create_app():
     db.init_app(app)
     api.init_app(app)
     CORS(app)
-    JWTManager(app)
+    jwt = JWTManager(app)
     return app
 
 
@@ -44,8 +44,8 @@ def initialise_database():
                 password=hashed_password,
                 role="Admin",
                 mobile_number="None",
-                address="None",
-                pincode="None"
+                # address="None",
+                # pincode="None"
             )
         
             

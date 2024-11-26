@@ -1399,3 +1399,968 @@ export default {
 }
 </style>
 
+psignup
+
+<template>
+  <div class="row">
+    <div class="col-md-6 offset-md-3">
+      <div>
+        <h3>Sign Up</h3>
+        <hr />
+        <form @submit.prevent="validateForm">
+          <!-- Name Field -->
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" class="form-control" v-model="name" placeholder="Enter your name" required />
+          </div>
+
+          <!-- Email Field -->
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" class="form-control" v-model="email" placeholder="Enter your email" required />
+          </div>
+
+          <!-- Password Field -->
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" class="form-control" v-model="password" placeholder="Enter your password" required />
+          </div>
+
+          <!-- Mobile Number Field -->
+          <div class="form-group">
+            <label>Mobile Number</label>
+            <input type="text" class="form-control" v-model="mobileNumber" placeholder="Enter your mobile number" required />
+          </div>
+
+          <!-- Address Field -->
+          <div class="form-group">
+            <label>Address</label>
+            <input type="text" class="form-control" v-model="address" placeholder="Enter your address" required />
+          </div>
+
+          <!-- PinCode Field -->
+          <div class="form-group">
+            <label>PinCode</label>
+            <input type="text" class="form-control" v-model="pincode" placeholder="Enter your pincode" required />
+          </div>
+
+          <!-- Submit Button -->
+          <div class="my-3">
+            <button type="submit" class="btn btn-primary">
+              Sign Up
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import axios from "axios";
+export default {
+  name: "SignUp",
+  data() {
+    return {
+      name: "",
+      email: "",
+      password: "",
+      mobileNumber: "",
+      address: "",
+      pincode: "",
+    };
+  },
+  methods: {
+    async validateForm() {
+      console.log(this.name, this.email, this.password, this.mobileNumber, this.address, this.pincode);
+      // Validate mobile number and pincode
+      const mobileNumberPattern = /^\d{10}$/;
+      const pincodePattern = /^\d{6}$/;
+
+      if (!mobileNumberPattern.test(this.mobileNumber)) {
+        alert("Mobile number must be exactly 10 digits.");
+        return;
+      }
+
+      if (!pincodePattern.test(this.pincode)) {
+        alert("Pincode must be exactly 6 digits.");
+        return;
+      }
+
+      // Proceed with form submission if validation passes
+      // alert("Form is valid. Submitting...");
+       try {
+                const response = await axios.post('http://127.0.0.1:5000/register', {
+                    email: this.email,
+                    password: this.password,
+                    name: this.name,
+                    mobile_number: this.mobileNumber,
+                    address: this.address,
+                    pincode: this.pincode
+                });
+                console.log("RegistrationAPI successful", response.data);
+                if (response.status == 201) {
+                  alert(response.data.message)
+                      console.log(response)
+                      this.$router.push({ name: 'LoginPg' })
+                  }
+                // Handle success, e.g., store token, redirect, etc.
+            } catch (error) {
+                console.error("Login failed", error);
+                // Handle error, e.g., display error message
+            }
+      // Add further submission logic here, if necessary.
+    },
+  },
+};
+</script>
+
+
+psignup<template>
+  <div class="row">
+    <div class="col-md-6 offset-md-3">
+      <div>
+        <h3>Sign Up</h3>
+        <hr />
+        <form @submit.prevent="validateForm">
+          <!-- Name Field -->
+          <div class="form-group">
+            <label>Name</label>
+            <input
+              type="text"
+              class="form-control"
+              v-model="name"
+              placeholder="Enter your name"
+              required
+            />
+          </div>
+
+          <!-- Email Field -->
+          <div class="form-group">
+            <label>Email</label>
+            <input
+              type="email"
+              class="form-control"
+              v-model="email"
+              placeholder="Enter your email"
+              required
+            />
+          </div>
+
+          <!-- Password Field -->
+          <div class="form-group">
+            <label>Password</label>
+            <input
+              type="password"
+              class="form-control"
+              v-model="password"
+              placeholder="Enter your password"
+              required
+            />
+          </div>
+
+          <!-- Mobile Number Field -->
+          <div class="form-group">
+            <label>Mobile Number</label>
+            <input
+              type="text"
+              class="form-control"
+              v-model="mobileNumber"
+              placeholder="Enter your mobile number"
+              required
+            />
+          </div>
+
+          <!-- Experience Field -->
+          <div class="form-group">
+            <label>Experience</label>
+            <input
+              type="number"
+              class="form-control"
+              v-model="experience"
+              placeholder="Enter your experience in years"
+              required
+            />
+          </div>
+
+          <!-- PinCode Field -->
+          <div class="form-group">
+            <label>PinCode</label>
+            <input
+              type="text"
+              class="form-control"
+              v-model="pincode"
+              placeholder="Enter your pincode"
+              required
+            />
+          </div>
+
+          <!-- Service Category Dropdown -->
+          <div class="form-group">
+            <label>Service Category</label>
+            <select class="form-control" v-model="serviceCategory" required>
+              <option value="salon-women">Salon for Women</option>
+              <option value="salon-men">Salon for Men</option>
+              <option value="ac-appliance">AC and Appliance Servicing</option>
+              <option value="painting">Painting</option>
+              <option value="electrician">Electrician</option>
+              <option value="carpenter">Carpenters</option>
+            </select>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="my-3">
+            <button type="submit" class="btn btn-primary">
+              Sign Up
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  name: "PSignup",
+  data() {
+    return {
+      name: "",
+      email: "",
+      password: "",
+      mobileNumber: "",
+      experience: null,
+      pincode: "",
+      serviceCategory: "",
+    };
+  },
+  methods: {
+    validateForm() {
+      // Validate mobile number and pincode
+      const mobileNumberPattern = /^\d{10}$/;
+      const pincodePattern = /^\d{6}$/;
+
+      if (!mobileNumberPattern.test(this.mobileNumber)) {
+        alert("Mobile number must be exactly 10 digits.");
+        return;
+      }
+
+      if (!pincodePattern.test(this.pincode)) {
+        alert("Pincode must be exactly 6 digits.");
+        return;
+      }
+
+      // Proceed with form submission if validation passes
+      alert("Form is valid. Submitting...");
+      // Add further submission logic here, if necessary.
+    },
+  },
+};
+</script>
+
+<style>
+h3 {
+  color: purple;
+}
+</style>
+
+
+
+working login
+
+<template>
+    <div class="container">
+        <div class="login-form">
+            <h3>Login</h3>
+            <hr />
+            <form @submit.prevent="handleSubmit">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="text" v-model="email" class="form-control" placeholder="Enter your email" required />
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" v-model="password" class="form-control" placeholder="Enter your password" required />
+                </div>
+                <button type="submit" class="login-btn">Login</button>
+                <button type="button" class="register-btn" @click="register">Register</button>
+            </form>
+        </div>
+    </div>
+</template>
+
+<script>
+import axios from 'axios';
+
+export default {
+    name: "LoginPg",
+    data() {
+        return {
+            email: "",
+            password: "",
+        };
+    },
+    methods: {
+        async handleSubmit() {
+            try {
+                const response = await axios.post('http://127.0.0.1:5000/login', {
+                    email: this.email,
+                    password: this.password
+                });
+                localStorage.setItem('token', response.data.access_token);
+                localStorage.setItem('userrole', response.data.userrole);
+                localStorage.setItem('name', response.data.username);
+                alert("Login Successful");
+                if (response.data.access_token && response.data.userrole === 'Admin') {
+                    this.$router.push('/admin');
+                } else if (response.data.access_token && response.data.userrole === 'User') {
+                    this.$router.push('/');
+                }
+            } catch (error) {
+                console.error("Login failed", error);
+            }
+        },
+        register() {
+            // Handle navigation to the registration page
+            this.$router.push('/register');
+        }
+    },
+    mounted() {
+        if (localStorage.getItem("token") && localStorage.getItem("userrole") === 'Admin') {
+            this.$router.push('/admin');
+        } else if (localStorage.getItem("token") && localStorage.getItem("userrole") === 'Professional') {
+            this.$router.push('/professional');
+        } else if (localStorage.getItem("token") && localStorage.getItem("userrole") === 'User') {
+            this.$router.push('/');
+        }
+    }
+};
+</script>
+
+<style>
+body {
+    background-color: #025f5d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.login-form {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(88, 195, 199, 0.504);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+h3 {
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #333;
+}
+
+.form-group {
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+label {
+    font-size: 14px;
+    color: #555;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-sizing: border-box;
+    margin-top: 5px;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+.login-btn {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background-color: #007bff;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 20px;
+}
+.register-btn {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background-color: #41933d;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 20px;
+}
+
+.login-btn:hover {
+    background-color: #0056b3;
+}
+</style>
+
+
+
+models.py
+from datetime import datetime
+from instance.database import db
+
+# User table with roles
+#from sqlalchemy import CheckConstraint
+
+class Person(db.Model):
+    __tablename__ = 'persons'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False)
+    email = db.Column(db.String(50), unique=True, nullable=False)
+    password = db.Column(db.String(20), nullable=False)
+    mobile_number = db.Column(db.String(10), nullable=False)
+
+    date_joined = db.Column(db.DateTime, default=db.func.current_timestamp())
+    pincode = db.Column(db.String(100), nullable=False)  # Comma-separated list, up to 10 pincodes
+    #__table_args__ = (CheckConstraint("length(split_part(pincodes, ',', 10)) <= 10", name="max_10_pincodes"),)
+
+class User(Person):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, db.ForeignKey('persons.id'), primary_key=True)
+    role = db.Column(db.String(20), default='user')
+    address = db.Column(db.String(255), nullable=False)  # Comma-separated list for multiple addresses
+
+class Professional(Person):
+    __tablename__ = 'professionals'
+    id = db.Column(db.Integer, db.ForeignKey('persons.id'), primary_key=True)
+    service_category = db.Column(db.String(50), nullable=False)
+    ratings = db.Column(db.Float, nullable=False)
+    experience = db.Column(db.Integer, nullable=False)
+    aadhar_card = db.Column(db.String(12), unique=True, nullable=False)  # Assuming 12-digit Aadhar card
+    document = db.Column(db.LargeBinary, nullable=False)  # Add file size validation in form handling
+
+'''class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False)
+    email = db.Column(db.String(50), unique=True, nullable=False)
+    password = db.Column(db.String(20), nullable=False)
+    #address = db.Column(db.String(100),nullable = False)
+    role = db.Column(db.String(20), nullable=False)
+    created = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+class Professional(db.Model):
+    __tablename__ = 'professionals'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    name = db.Column(db.String(50), nullable=False)
+    service_type = db.Column(db.String(50))
+    experience = db.Column(db.Integer)
+
+    # Define the relationship with Service
+    services = db.relationship('Service', back_populates='professional')
+'''
+class Service(db.Model):
+    __tablename__ = 'services'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    # professional_id = db.Column(db.Integer, db.ForeignKey('professionals.id'), nullable=False)
+    base_price = db.Column(db.Float, nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    category = db.Column(db.String(50))
+    time_required = db.Column(db.String(50))
+    # approval_status = db.Column(db.String(20), default='Pending')
+    #total_orders = db.Column(db.Integer, default=0)
+    avg_rating = db.Column(db.Float, default=0.0)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "base_price": self.base_price,
+            "category": self.category
+        }
+
+    # Establish relationship with Professional
+    #professional = db.relationship('Professional', back_populates='services')
+    
+# Service Request table with relationships to User, Professional, and Service
+class ServiceRequest(db.Model):
+    __tablename__ = 'service_requests'
+    id = db.Column(db.Integer, primary_key=True)
+    service_id = db.Column(db.Integer, db.ForeignKey('services.id'), nullable=False)  # Foreign key to Service
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)  # Customer ID (User table)
+    professional_id = db.Column(db.Integer, db.ForeignKey('professionals.id'), default = None)  # Assigned Professional
+    date_of_request = db.Column(db.DateTime,nullable = False)
+    booking_date = db.Column(db.DateTime, nullable=False)  
+    status = db.Column(db.String(20), default='Requested')  # E.g., 'Requested', 'Assigned', 'Completed', 'Closed'
+    rating = db.Column(db.Float, nullable=True)
+    comments = db.Column(db.Text, nullable=True)
+    quantity = db.Column(db.Integer, nullable=False)
+    # user = db.Relationship('User', foreign_keys=[user_id])
+    # professional = db.Relationship('User', foreign_keys=[professional_id])
+    # service = db.Relationship('Service', foreign_keys=[service_id])
+    service = db.relationship('Service', backref='service_requests')
+    user = db.relationship('User', foreign_keys=[user_id], backref='service_requests')
+    professional = db.relationship('User', foreign_keys=[professional_id], backref='professional_requests',
+                                   primaryjoin="and_(ServiceRequest.professional_id == User.id, User.role == 'Professional')") 
+    # professional = db.relationship('User', foreign_keys=[professional_id], backref='professional_requests')
+    # user = db.relationship('User', backref='service_requests')
+    # professional = db.relationship('Professional', backref='service_requests') 
+
+
+
+
+    MY PREV UCart
+    <template>
+  <div>
+    <h2>Services in Your Cart</h2>
+    <div v-if="cartItems.length">
+      <div v-for="item in cartItems" :key="item.id" class="cart-item">
+        <p>{{ item.name }} - Quantity: {{ item.quantity }}</p>
+        <p>Price per unit: {{ item.base_price }} Rs</p>
+        <p>Subtotal: {{ item.quantity * item.base_price }} Rs</p>
+      </div>
+      <div>
+        <h3>Total Cost: {{ totalCost }} Rs</h3>
+      </div>
+    </div>
+    
+    <div v-else>
+      <p>No items in your cart.</p>
+    </div>
+
+    <div v-if="cartItems.length">
+      <h3>Booking Details</h3>
+      <form @submit.prevent="placeOrder">
+        <label>Select Booking Date:</label>
+        <input type="date" v-model="bookingDate" />
+        
+        <label>Select Time Slot:</label>
+        <div class="time-slots">
+          <button type="button" v-for="slot in timeSlots" :key="slot" @click="selectTimeSlot(slot)">
+            {{ slot }}
+          </button>
+        </div>
+
+        <h4>Selected Slot: {{ selectedTimeSlot }}</h4>
+        
+        <button type="submit" :disabled="!selectedTimeSlot || !bookingDate">Place an Order</button>
+      </form>
+    </div>
+  </div>
+</template>
+<script>
+import axios from 'axios';
+
+export default {
+  data() {
+    return {
+      service_id: this.$route.params.id,
+      cartItems: [],
+      bookingDate: '',
+      timeSlots: ["7:00 AM", "9:00 AM", "11:00 AM", "1:00 PM", "3:00 PM", "5:00 PM"],
+      selectedTimeSlot: '',
+      totalCost: 0
+    };
+  },
+  mounted() {
+    this.cartItems = JSON.parse(localStorage.getItem('cart')) || [];
+    this.calculateTotalCost();
+    console.log('Cart items:', this.cartItems);
+  },
+  methods: {
+    selectTimeSlot(slot) {
+      this.selectedTimeSlot = slot;
+    },
+    calculateTotalCost() {
+      this.totalCost = this.cartItems.reduce((total, item) => total + item.quantity * item.base_price, 0);
+    },
+    updateLocalStorage() {
+      localStorage.setItem('cart', JSON.stringify(this.cartItems));
+    },
+    async placeOrder() {
+      try {
+        const token = localStorage.getItem('token');
+        
+        const response = await axios.post(
+          'http://127.0.0.1:5000/place_order',
+          {
+            items: this.cartItems.map(item => ({
+              service_id: item.id,
+              quantity: item.quantity
+            })),
+            booking_date: `${this.bookingDate} ${this.selectedTimeSlot}`
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+        
+        alert(response.data.message);
+        
+        // Clear the cart and update local storage
+        this.cartItems = [];
+        this.updateLocalStorage();
+        
+      } catch (error) {
+        console.error('Error placing order:', error);
+        if (error.response && error.response.status === 401) {
+          alert('Please login to place an order.');
+        } else {
+          alert('An error occurred. Please try again later.');
+        }
+      }
+    }
+  }
+};
+</script>
+
+<style scoped>
+.cart-item {
+  border-bottom: 1px solid #ddd;
+  padding: 10px 0;
+}
+.time-slots button {
+  margin: 5px;
+  padding: 5px 10px;
+}
+</style>
+
+
+
+
+  <template>
+  <div>
+    <h2>Services in Your Cart</h2>
+    <div v-if="cartItems.length">
+      <div v-for="item in cartItems" :key="item.id" class="cart-item">
+        <p>{{ item.name }} - Quantity: {{ item.quantity }}</p>
+        <p>Price per unit: {{ item.base_price }} Rs</p>
+        <p>Subtotal: {{ item.quantity * item.base_price }} Rs</p>
+      </div>
+      <div>
+        <h3>Total Cost: {{ totalCost }} Rs</h3>
+      </div>
+    </div>
+    
+    <div v-else>
+      <p>No items in your cart.</p>
+    </div>
+
+    <div v-if="cartItems.length">
+      <h3>Booking Details</h3>
+      <form @submit.prevent="placeOrder">
+        <label>Select Booking Date:</label>
+        <input type="date" v-model="bookingDate" />
+        
+        <label>Select Time Slot:</label>
+        <div class="time-slots">
+          <button type="button" v-for="slot in timeSlots" :key="slot" @click="selectTimeSlot(slot)">
+            {{ slot }}
+          </button>
+        </div>
+
+        <h4>Selected Slot: {{ selectedTimeSlot }}</h4>
+        
+        <button type="submit" :disabled="!selectedTimeSlot || !bookingDate">Place an Order</button>
+      </form>
+    </div>
+  </div>
+</template>
+<script>
+import axios from 'axios';
+
+export default {
+  data() {
+    return {
+      // service_id: this.$route.params.id,
+      cartItems: [],
+      bookingDate: '',
+      timeSlots: ["7:00 AM", "9:00 AM", "11:00 AM", "1:00 PM", "3:00 PM", "5:00 PM"],
+      selectedTimeSlot: '',
+      totalCost: 0
+    };
+  },
+  methods: {
+    selectTimeSlot(slot) {
+      this.selectedTimeSlot = slot;
+    },
+    calculateTotalCost() {
+      this.totalCost = this.cartItems.reduce((total, item) => total + item.quantity * item.base_price, 0);
+    },
+    updateLocalStorage() {
+      localStorage.setItem('cart', JSON.stringify(this.cartItems));
+    },
+    async placeOrder() {
+      try {
+        let token = localStorage.getItem("Auth-Token");
+        let tokenValue = JSON.parse(token || null);
+        let authValue = "Bearer "+tokenValue
+        const id = this.$route.params.id
+        const data = {
+          service_id: id, // The service ID from the database
+          name: this.name,
+          base_price: this.base_price,
+          bookingDate: this.bookingDate,
+          timeSlot: this.selectedTimeSlot,
+          quantity: 1, // Default quantity when adding to cart
+          }
+        const response =  axios.post(`http://127.0.0.1:5000/place_order`, data, {
+                    headers: {'Authorization': authValue}});
+        console.log(response);
+        alert(response.data.message);
+        
+        // Clear the cart and update local storage
+        this.cartItems = [];
+        this.updateLocalStorage();
+        
+      } catch (error) {
+        console.error('Error placing order:', error);
+        if (error.response && error.response.status === 401) {
+          alert('Please login to place an order.');
+        } else {
+          alert('An error occurred. Please try again later.');
+        }
+      }
+    }
+  }
+},
+async mounted() {
+    this.cartItems = JSON.parse(localStorage.getItem('cart')) || [];
+    this.calculateTotalCost();
+    console.log('Cart items:', this.cartItems);
+    let token = localStorage.getItem("Auth-Token");
+    let tokenValue = JSON.parse(token || null);
+    let authValue = "Bearer "+tokenValue
+    const id = this.$route.params.id
+    const response = await axios.get(`http://
+  }
+</script>
+
+<style scoped>
+.cart-item {
+  border-bottom: 1px solid #ddd;
+  padding: 10px 0;
+}
+.time-slots button {
+  margin: 5px;
+  padding: 5px 10px;
+}
+</style>
+
+
+
+<template>
+  <div>
+    <h2>User Profile</h2>
+    <form @submit.prevent="updateProfile">
+      <div>
+        <label for="name">Name:</label>
+        <input type="text" id="name" v-model="user.name" required />
+      </div>
+      <div>
+        <label for="email">Email:</label>
+        <input type="email" id="email" v-model="user.email"  required />
+      </div>
+      <div>
+        <label for="mobile">Mobile Number:</label>
+        <input type="tel" id="mobile" v-model="user.mobile_number" required />
+      </div>
+      <div>
+        <label for="address">Address:</label>
+        <input type="text" id="address" v-model="user.address" required />
+      </div>
+      <div>
+        <label for="pincode">Pincode:</label>
+        <input type="text" id="pincode" v-model="user.pincode" required />
+      </div>
+      <button type="submit" class="submit-btn">Update Profile</button>
+    </form>
+  </div>
+</template>
+
+<script>
+import axios from 'axios';
+
+export default {
+  name: 'UProfile',
+  data() {
+    return {
+      user: {
+        name: '',
+        email: '',
+        mobile_number: '',
+        address: '',
+        pincode: '',
+      },
+    };
+  },
+  async mounted() {
+        try {
+        const token = localStorage.getItem('token');
+        const authValue = 'Bearer ' + token;
+
+        const response = await axios.get('http://127.0.0.1:5000/profile', {
+          headers: { Authorization: authValue },
+        });
+        this.user = response.data;
+
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+        alert('An error occurred. Please try again later.');
+      }
+    },
+  methods: {
+    async updateProfile() {
+      try {
+        const token = localStorage.getItem('Auth-Token');
+        let tokenValue = JSON.parse(token || null);
+        const authValue = 'Bearer ' + token;
+        const data = {
+          name: this.user.name,
+          email: this.user.email,
+          mobile_number: this.user.mobile_number,
+          address: this.user.address,
+          pincode: this.user.pincode,
+        };
+
+        const response = await axios.put('http://127.0.0.1:5000/profile', data, {
+          headers: { Authorization: authValue },
+        });
+        alert('Profile updated successfully.');
+      } catch (error) {
+        console.error('Error updating user profile:', error);
+        alert('An error occurred. Please try again later.');
+      }
+    },
+  },
+};
+</script>
+
+
+
+<----------------------------------->
+
+
+
+# class BookingAPI(Resource):
+#     @jwt_required()
+#     @role_required('USER')
+#     def post(self):
+#         data = request.get_json()
+#         user_email = get_jwt_identity()
+#         booking = ServiceRequest(
+#                    )
+#         db.session.add(booking)
+#         id = data.get('show_id')
+#         service = Service.query.get(id)
+#         if service:
+#             service.bookings = show.bookings + data.get('tickets')
+#             db.session.commit()
+#             #cache.delete("showcache")
+#             showname = show.Show_Name
+#             bodymsg = "You have booked "+ str(data.get('tickets'))+" Tickets of " + showname+"."
+#             #send_mail_task.delay(receiver_email = user_email, subject= "Booking Successful" , body=bodymsg)
+#             return {"message" : "Booked Successfully."}, 200
+#         else:
+#             return {"message" : "Invalid Show_id"} , 404
+
+#     @jwt_required()  
+#     def get(self):
+#         id = get_jwt_identity()
+#         alldata = []
+#         bookings = Booking.query.filter_by(user_id =id)
+#         for booking in bookings:
+#             id = booking.id
+#             showid = booking.show_id
+#             show = Show.query.filter_by(id = showid).first()
+#             venueid = show.Venue_id
+#             venue = Venue.query.filter_by(id = venueid).first()
+#             venuename = venue.Venue_Name
+#             showname = show.Show_Name
+#             timing = show.Timing
+#             ratings = Rating.query.filter_by(booking_id = id).first()
+#             if ratings:
+#                 stars = ratings.stars
+#             else:
+#                 stars = 0
+#             data = {
+#                 "id" : id,
+#                 "venuename" : venuename,
+#                 "showname" : showname,
+#                 "timing" : timing,
+#                 "rating" : stars
+#             }
+#             alldata.append(data)
+#         if len(alldata) > 0:
+#             return {'bookings': alldata , "message" : "ok"} , 200
+#         else:
+#             return {"message" : "Bookings Not Found"} , 200
+
+
+
+
+    
+# api.add_resource(BookingAPI, '/book')
+
+
+# class UserProfile(Resource):
+#     @jwt_required()
+#     def get(self):
+#         user_email = get_jwt_identity()
+#         user = User.query.get(user_email)
+#         return {
+#             'name': user.name,
+#             'email': user.email,
+#             'mobile_number': user.mobile_number,
+#             'address': user.address,
+#             'pincode': user.pincode,
+#         }
+
+#     @jwt_required()
+#     def put(self):
+#         user_email = get_jwt_identity()
+#         user = User.query.get(user_email)
+
+#         data = request.get_json()
+#         user.name = data['name']
+#         user.email = data['email']
+#         user.mobile_number = data['mobile_number']
+#         user.address = data['address']
+#         user.pincode = data['pincode']
+
+#         db.session.commit()
+#         return {'message': 'Profile updated successfully.'}, 200
+
+
+# # api.add_resource(AddToCart, '/add_to_cart')
+# api.add_resource(AvailableSlots, '/available_slots')
+# api.add_resource(UserProfile, '/profile')
+
+# # api.add_resource(PlaceOrder, '/place_order')

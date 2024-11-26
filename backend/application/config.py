@@ -19,6 +19,9 @@ class Config():
     SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URI')
     SECRET_KEY = os.getenv('SECRET_KEY')
     SECURITY_TOKEN_AUTHENTICATION_HEADER = os.getenv('SECURITY_TOKEN_AUTHENTICATION_HEADER')
+    UPLOAD_FOLDER = 'uploads'
+    ALLOWED_EXTENSIONS = {'pdf', 'jpg', 'jpeg', 'png', 'txt', 'docx'}
+    MAX_CONTENT_LENGTH= 1024 * 1024
     
 
 

@@ -111,3 +111,112 @@ export default {
   },
 };
 </script>
+<style scoped>
+body {
+  background-color: #071228;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  color: white;
+}
+
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #071228;
+  padding: 20px;
+}
+
+.signup-form {
+  background-color: #1a2942;
+  padding: 30px;
+  border-radius: 15px;
+  width: 100%;
+  max-width: 500px;
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.signup-form h3 {
+  margin-bottom: 20px;
+  font-size: 24px;
+  color: white;
+  text-align: center;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: white;
+  font-weight: 500;
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background-color: white; /* White background */
+  color: black; /* Black text */
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.form-control:hover {
+  border-color: #3182ce; /* Light blue border on hover */
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #4299e1; /* Blue border on focus */
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.3); /* Subtle focus shadow */
+}
+
+.file-input {
+  padding: 8px;
+  background-color: white;
+  color: black;
+}
+
+.help-text {
+  display: block;
+  margin-top: 5px;
+  color: #a0aec0;
+  font-size: 0.875rem;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background-color: #4299e1;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 20px;
+}
+
+.submit-btn:hover {
+  background-color: #3182ce;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #2d4056;
+  margin: 20px 0;
+}
+</style>

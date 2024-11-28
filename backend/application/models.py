@@ -17,6 +17,7 @@ class Customer(User):
     id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     address = db.Column(db.String(255), nullable=False)
     pincode = db.Column(db.String(100), nullable=False) 
+    status = db.Column(db.String(20), default='Accepted')   
 
 
 class Professional(User):
@@ -73,3 +74,4 @@ class ServiceRequest(db.Model):
     service = db.relationship('Service', backref='service_requests')
     customer = db.relationship('Customer', backref='service_requests')
     professional = db.relationship('Professional', backref='service_requests')
+    # cancelled_at = db.Column(db.DateTime, nullable=True)

@@ -1,20 +1,24 @@
 import UHome from './components/UHome.vue';
 import LoginPg from './components/LoginPg.vue';
 // import UCategory from './components/UCategory.vue';
-// import USummary from './components/USummary.vue';
+import USummary from './components/USummary.vue';
 import UCart from './components/UCart.vue';
-// import URecords from './components/URecords.vue';
-import UProfile from './components/UProfile.vue';   
+import AUsers from './components/AUsers.vue';
+import UProfile from './components/UProfile.vue';  
+import PProfile from './components/PProfile.vue';
+import PSummary from './components/PSummary.vue';
+import PRequests from './components/PRequests.vue';
 import SignUp from './components/SignUp.vue';
 import AHome from './components/AHome.vue';
 import AddServices from './components/AddServices.vue';
 import EditServices from './components/EditServices.vue';
-// import ASummary from './components/ASummary.vue';
+import ARequests from './components/ARequests.vue';
 import PSignup from './components/PSignup.vue';
 import PHome from './components/PHome.vue';
 import UnauthorizedAccess from './components/UnauthorizedAccess.vue'
 import AProfs from './components/AProfs.vue';
 import UOrders from './components/UOrders.vue';
+import ASummary from './components/ASummary.vue';
 
 import { createRouter, createWebHistory } from 'vue-router'
 
@@ -41,16 +45,35 @@ const routes = [
         component: AProfs,
         path: '/aprofs'
     },
-    // {
-    //     name: 'UCategory',
-    //     component:UCategory ,
-    //     path: '/ucategory/:category'
-    // },
-    // {
-    //     name: 'ASummary',
-    //     component:ASummary ,
-    //     path: '/asummary'
-    // },
+    {
+        name: 'PProfile',
+        component: PProfile,
+        meta: { requiresAuth: true, roles: ['Professional'] },
+        path: '/pprofile'
+    },
+    {
+        name: 'ARequests',
+        component: ARequests,
+        meta: { requiresAuth: true, roles: ['Admin'] },
+        path: '/arequests'
+    },
+    {
+        name: 'PSummary',
+        component: PSummary,
+        meta: { requiresAuth: true, roles: ['Professional'] },
+        path: '/psummary'
+    },
+    {
+        name: 'PRequests',
+        component: PRequests,
+        meta: { requiresAuth: true, roles: ['Professional'] },
+        path: '/prequests'
+    },
+    {
+        name: 'USummary',
+        component:USummary ,
+        path: '/usummary'
+    },
     {
         name: 'UCart',
         component: UCart ,
@@ -62,11 +85,13 @@ const routes = [
         component: UOrders,
         path: '/uorders'
     },
-    // {
-    //     name: 'URecords',
-    //     component: URecords,
-    //     path: '/urecords'
-    // },
+    {
+        name: 'AUsers',
+        component: AUsers,
+        meta: { requiresAuth: true, roles: ['Admin'] },
+
+        path: '/ausers'
+    },
     {
         name: 'UProfile',
         component: UProfile ,
@@ -105,6 +130,12 @@ const routes = [
         name: 'UnauthorizedAccess',
         component: UnauthorizedAccess,
         path: '/unauthorized'
+    },
+    {
+        name: 'ASummary',
+        component: ASummary,
+        meta: { requiresAuth: true, roles: ['Admin'] },
+        path: '/asummary'
     }
 ];
 
@@ -113,20 +144,26 @@ const router = createRouter({
     routes
 })
 
-// // Add this before creating the router
-// router.beforeEach((to, from, next) => {
-//   if (to.meta.requiresAuth) {
-//     const token = localStorage.getItem('token');
-//     if (!token) {
-//       next('/login');
-//       return;
-//     }
-    
-//     // You might want to verify the token and role here
-//     // For now, we'll just check if token exists
-//     next();
-//   } else {
-//     next();
-// 
+// Add or update the route guard
+router.beforeEach((to, from, next) => {
+  if (to.meta.requiresAuth) {
+    const token = localStorage.getItem('token');
+    const userRole = localStorage.getItem('userrole');
+
+    if (!token || !userRole) {
+      next('/login');
+      return;
+    }
+
+    if (to.meta.roles && !to.meta.roles.includes(userRole)) {
+      next('/unauthorized');
+      return;
+    }
+
+    next();
+  } else {
+    next();
+  }
+});
 
 export default router

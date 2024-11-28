@@ -25,6 +25,409 @@ export default {
 
 
 
+
+
+
+
+
+
+
+
+
+
+<template>
+  <div class="main-container">
+    <div class="navigation-bar">
+      <div class="nav-header">
+        <h2><i>Professional Dashboard</i></h2>
+        <div class="nav-buttons">
+          <button 
+            @click="navigateTo('PHome')"
+            :class="{ active: currentRoute === 'PHome' }"
+          >Home</button>
+          <button 
+            @click="navigateTo('PRequests')"
+            :class="{ active: currentRoute === 'PRequests' }"
+          >Requests</button>
+          <button 
+            @click="navigateTo('PProfile')"
+            :class="{ active: currentRoute === 'PProfile' }"
+          >Profile</button>
+          <button 
+            @click="navigateTo('PSummary')"
+            :class="{ active: currentRoute === 'PSummary' }"
+          >Summary</button>
+          <button @click="logout" class="logout-btn">Logout</button>
+        </div>
+      </div>
+      
+      <!-- Search Section -->
+      <div class="search-filters">
+        <input 
+          v-model="searchQuery" 
+          placeholder="Search service requests..." 
+          @input="filterRequests"
+          class="search-input" 
+        />
+        <select 
+          v-model="statusFilter"
+          class="status-select"
+          @change="filterRequests"
+        >
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="content-area">
+      <div class="services-container">
+        <div v-for="status in groupedRequests" :key="status.name" class="category-section">
+          <h3 class="category-title">{{ status.name }}</h3>
+          <div class="services-grid">
+            <div v-for="request in status.requests" :key="request.id" class="service-card">
+              <div class="service-header">
+                <h4>{{ request.service_name }}</h4>
+                <span :class="'status-badge ' + request.status">{{ request.status }}</span>
+              </div>
+              <div class="customer-details">
+                <p><i class="user-icon">👤</i> {{ request.customer_name }}</p>
+                <p><i class="phone-icon">📱</i> {{ request.customer_phone }}</p>
+              </div>
+              <div class="service-details">
+                <p><i class="calendar-icon">📅</i> {{ request.booking_date }}</p>
+                <p><i class="time-icon">⏰</i> {{ request.time_slot }}</p>
+                <p><i class="price-icon">💰</i> ₹{{ request.total_price }}</p>
+              </div>
+              <div class="action-buttons">
+                <button 
+                  v-if="request.status === 'pending'"
+                  @click="acceptRequest(request.id)"
+                  class="accept-btn"
+                >
+                  Accept
+                </button>
+                <button 
+                  v-if="request.status === 'confirmed'"
+                  @click="completeRequest(request.id)"
+                  class="complete-btn"
+                >
+                  Complete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import axios from 'axios';
+
+export default {
+  name: 'PHome',
+  data() {
+    return {
+      searchQuery: "",
+      statusFilter: "",
+      requests: [],
+      filteredRequests: [],
+      currentRoute: 'PHome'
+    };
+  },
+  computed: {
+    groupedRequests() {
+      const statusNames = {
+        'pending': 'New Requests',
+        'confirmed': 'Ongoing Services',
+        'completed': 'Completed Services'
+      };
+      
+      const grouped = {};
+      this.filteredRequests.forEach(request => {
+        if (!grouped[request.status]) {
+          grouped[request.status] = {
+            name: statusNames[request.status] || request.status,
+            requests: []
+          };
+        }
+        grouped[request.status].requests.push(request);
+      });
+      return Object.values(grouped);
+    }
+  },
+  methods: {
+    navigateTo(page) {
+      this.$router.push({ name: page });
+    },
+    logout() {
+      localStorage.clear();
+      this.$router.push("/login");
+    },
+    async fetchRequests() {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get('http://127.0.0.1:5000/professional/requests', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        this.requests = response.data;
+        this.filterRequests();
+      } catch (error) {
+        console.error('Error fetching requests:', error);
+        if (error.response?.status === 401) {
+          this.$router.push('/login');
+        }
+      }
+    },
+    filterRequests() {
+      this.filteredRequests = this.requests.filter(request => {
+        const matchesStatus = !this.statusFilter || request.status === this.statusFilter;
+        const searchLower = this.searchQuery.toLowerCase();
+        const matchesSearch = !this.searchQuery || 
+          request.service_name.toLowerCase().includes(searchLower) ||
+          request.customer_name.toLowerCase().includes(searchLower);
+        
+        return matchesStatus && matchesSearch;
+      });
+    },
+    async acceptRequest(requestId) {
+      try {
+        const token = localStorage.getItem('token');
+        await axios.put(`http://127.0.0.1:5000/professional/requests/${requestId}/accept`, {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        await this.fetchRequests();
+      } catch (error) {
+        console.error('Error accepting request:', error);
+        alert('Failed to accept request');
+      }
+    },
+    async completeRequest(requestId) {
+      try {
+        const token = localStorage.getItem('token');
+        await axios.put(`http://127.0.0.1:5000/professional/requests/${requestId}/complete`, {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        await this.fetchRequests();
+      } catch (error) {
+        console.error('Error completing request:', error);
+        alert('Failed to complete request');
+      }
+    }
+  },
+  mounted() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      this.$router.push("/login");
+      return;
+    }
+    this.fetchRequests();
+  }
+};
+</script>
+
+<style scoped>
+.main-container {
+  background-color: #2d3748;
+  padding: 30px;
+  min-height: 100vh;
+  color: white;
+}
+
+.navigation-bar {
+  background: #2d3748;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+.nav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 15px;
+}
+
+.nav-buttons button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #444;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.nav-buttons button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.nav-buttons button.active {
+  background: #0d6efd;
+  color: white;
+}
+
+.logout-btn {
+  background: #dc3545 !important;
+  color: white !important;
+}
+
+.search-filters {
+  display: flex;
+  gap: 20px;
+  margin-top: 15px;
+}
+
+.search-input, .status-select {
+  padding: 10px;
+  border: 1px solid #4a5568;
+  border-radius: 8px;
+  background: #2d3748;
+  color: white;
+  flex: 1;
+}
+
+.search-input::placeholder {
+  color: #a0aec0;
+}
+
+.category-section {
+  margin-bottom: 40px;
+}
+
+.category-title {
+  font-size: 1.5rem;
+  color: #e2e8f0;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #4a5568;
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.service-card {
+  background: #444;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.service-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.service-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.service-header h4 {
+  margin: 0;
+  color: white;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.status-badge.pending {
+  background: #ffd700;
+  color: black;
+}
+
+.status-badge.confirmed {
+  background: #48bb78;
+  color: white;
+}
+
+.status-badge.completed {
+  background: #4299e1;
+  color: white;
+}
+
+.customer-details, .service-details {
+  margin: 15px 0;
+}
+
+.customer-details p, .service-details p {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  color: #e2e8f0;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.action-buttons button {
+  flex: 1;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+}
+
+.accept-btn {
+  background: #48bb78;
+}
+
+.complete-btn {
+  background: #4299e1;
+}
+
+.action-buttons button:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+  .main-container {
+    padding: 15px;
+  }
+  
+  .nav-buttons {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .search-filters {
+    flex-direction: column;
+  }
+  
+  .services-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+
+
+
 models.py
 
 from datetime import datetime
@@ -2364,3 +2767,985 @@ export default {
 # api.add_resource(UserProfile, '/profile')
 
 # # api.add_resource(PlaceOrder, '/place_order')
+
+
+
+
+
+LOGIN page
+<template>
+    <div class="container">
+        <div class="login-form">
+            <h3>Login</h3>
+            <hr />
+            <form @submit.prevent="handleSubmit">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="text" v-model="email" class="form-control" placeholder="Enter your email" required />
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" v-model="password" class="form-control" placeholder="Enter your password" required />
+                </div>
+                <button type="submit" class="login-btn">Login</button>
+                <div class="register-options">
+                    <router-link to="/signup">
+                        <button type="button" class="register-btn user">Register as User</button>
+                    </router-link>
+                    <router-link to="/psignup">
+                        <button type="button" class="register-btn professional">Register as Professional</button>
+                    </router-link>
+                </div>
+            </form>
+        </div>
+    </div>
+</template>
+
+<script>
+import axios from "axios";
+
+export default {
+  name: "LoginPg",
+  data() {
+    return {
+      email: "",
+      password: "",
+    };
+  },
+  methods: {
+    async handleSubmit() {
+      try {
+        const response = await axios.post("http://127.0.0.1:5000/login", {
+          email: this.email,
+          password: this.password,
+        });
+
+        const { access_token, userrole } = response.data;
+
+        if (access_token && userrole) {
+          localStorage.setItem("token", access_token);
+          localStorage.setItem("userrole", userrole);
+          localStorage.setItem("email", this.email);
+
+          switch (userrole) {
+            case "Admin":
+              this.$router.push("/admin");
+              break;
+            case "User":
+              this.$router.push("/");
+              break;
+            case "Professional":
+              this.$router.push("/professional");
+              break;
+            default:
+              console.error("Unknown user role.");
+              alert("Unknown role. Please contact support.");
+          }
+        }
+      } catch (error) {
+        console.error("Login error:", error);
+        
+        if (error.response?.status === 403) {
+          alert(error.response.data.message);
+        } else if (error.response?.status === 401) {
+          alert("Invalid credentials. Please try again.");
+        } else {
+          alert("An error occurred. Please try again later.");
+        }
+      }
+    }
+  },
+  mounted() {
+    const token = localStorage.getItem("token");
+    const userrole = localStorage.getItem("userrole");
+
+    if (token) {
+      switch (userrole) {
+        case "Admin":
+          this.$router.push("/admin");
+          break;
+        case "User":
+          this.$router.push("/");
+          break;
+        case "Professional":
+          this.$router.push("/professional");
+          break;
+        default:
+          console.error("Invalid user role in localStorage.");
+      }
+    }
+  },
+};
+</script>
+
+<style>
+body {
+    background-color: #071228;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    color: white;
+}
+
+.container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.login-form {
+    background-color: #1a2942;  /* Changed to a slightly lighter shade of dark blue */
+    padding: 30px;
+    border-radius: 15px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.login-form label {
+    color: white;
+    font-weight: 500;
+    margin-bottom: 5px;
+    display: block;
+    text-align: left;
+}
+
+.login-form h3 {
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: white;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #2d4056;  /* Darker border color */
+    border-radius: 8px;
+    box-sizing: border-box;
+    margin-top: 5px;
+    background-color: #2d4056;  /* Slightly lighter than form background */
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #4299e1;
+    box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
+}
+
+.login-btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #4299e1;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+}
+
+.register-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.register-btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.register-btn.user {
+    background-color: #48bb78;  /* Green color */
+}
+
+.register-btn.professional {
+    background-color: #805ad5;  /* Purple color */
+}
+
+.login-btn:hover,
+.register-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.login-btn:hover {
+    background-color: #3182ce;
+}
+
+.register-btn.user:hover {
+    background-color: #38a169;
+}
+
+.register-btn.professional:hover {
+    background-color: #6b46c1;
+}
+
+</style>
+
+
+
+
+aprofs.vue
+<template>
+  <div class="main-container">
+    <!-- Navigation Bar -->
+    <div class="navigation-bar">
+      <div class="nav-header">
+        <h2><i>Professional Management</i></h2>
+        <div class="nav-buttons">
+          <button 
+            @click="navigateTo('AHome')"
+            :class="{ active: currentRoute === 'AHome' }"
+          >Home</button>
+          <button 
+            @click="navigateTo('AProfs')"
+            :class="{ active: currentRoute === 'AProfs' }"
+          >Professionals</button>
+          <button 
+            @click="navigateTo('AUsers')"
+            :class="{ active: currentRoute === 'AUsers' }"
+          >Users</button>
+          <button 
+            @click="navigateTo('ARequests')"
+            :class="{ active: currentRoute === 'ARequests' }"
+          >Service Requests</button>
+          <button 
+            @click="navigateTo('ASummary')"
+            :class="{ active: currentRoute === 'ASummary' }"
+          >Summary</button>
+          <button @click="logout" class="logout-btn">Logout</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <div class="filters">
+        <input 
+          v-model="searchQuery" 
+          placeholder="Search by name, email, or category..."
+          class="search-input"
+          @input="filterProfessionals"
+        />
+        <select 
+          v-model="statusFilter"
+          class="status-select"
+          @change="filterProfessionals"
+        >
+          <option value="">All Status</option>
+          <option value="Pending">Pending</option>
+          <option value="Accepted">Active</option>
+          <option value="Blocked">Blocked</option>
+        </select>
+      </div>
+
+      <div class="table-container">
+        <table class="professionals-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Mobile</th>
+              <th>Category</th>
+              <th>Experience</th>
+              <th>Rating</th>
+              <th>Status</th>
+              <th>Document</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="professional in filteredProfessionals" :key="professional.id">
+              <td>{{ professional.name }}</td>
+              <td>{{ professional.email }}</td>
+              <td>{{ professional.mobile_number }}</td>
+              <td>{{ professional.service_category }}</td>
+              <td>{{ professional.experience }} years</td>
+              <td>{{ professional.ratings }} ⭐</td>
+              <td>
+                <span :class="'status-' + professional.status.toLowerCase()">
+                  {{ professional.status }}
+                </span>
+              </td>
+              <td>
+                <button 
+                  @click="viewDocument(professional.id)" 
+                  class="view-doc-btn"
+                >
+                  View Document
+                </button>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <button 
+                    v-if="professional.status === 'Pending'"
+                    @click="updateStatus(professional.id, 'Accepted')"
+                    class="action-btn accept-btn"
+                  >
+                    Accept
+                  </button>
+                   <button 
+        v-if="professional.status === 'Pending'"
+        @click="updateStatus(professional.id, 'Rejected')"
+        class="action-btn reject-btn"
+      >Reject</button>
+                  <button 
+                    v-if="professional.status === 'Accepted'"
+                    @click="updateStatus(professional.id, 'Blocked')"
+                    class="action-btn block-btn"
+                  >
+                    Block
+                  </button>
+                  <button 
+                    v-if="professional.status === 'Blocked'"
+                    @click="updateStatus(professional.id, 'Accepted')"
+                    class="action-btn unblock-btn"
+                  >
+                    Unblock
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import axios from 'axios';
+
+export default {
+  name: 'AProfs',
+  data() {
+    return {
+      professionals: [],
+      statusFilter: '',
+      searchQuery: '',
+      currentRoute: 'AProfs',
+      showDocModal: false,
+      documentUrl: null
+    }
+  },
+  computed: {
+    filteredProfessionals() {
+      return this.professionals.filter(professional => {
+        const matchesStatus = !this.statusFilter || professional.status === this.statusFilter;
+        const searchLower = this.searchQuery.toLowerCase();
+        const matchesSearch = !this.searchQuery || 
+          professional.name.toLowerCase().includes(searchLower) ||
+          professional.email.toLowerCase().includes(searchLower) ||
+          (professional.service_category && professional.service_category.toLowerCase().includes(searchLower));
+        
+        return matchesStatus && matchesSearch;
+      });
+    }
+  },
+  methods: {
+    navigateTo(page) {
+      this.$router.push({ name: page });
+    },
+    logout() {
+      localStorage.clear();
+      this.$router.push("/login");
+    },
+    async fetchProfessionals() {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get('http://127.0.0.1:5000/admin/professionals', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        this.professionals = response.data;
+      } catch (error) {
+        console.error('Error fetching professionals:', error);
+        if (error.response?.status === 401) {
+          this.$router.push('/login');
+        }
+      }
+    },
+    async updateStatus(profId, newStatus) {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          this.$router.push('/login');
+          return;
+        }
+
+        const response = await axios.put(
+          `http://127.0.0.1:5000/admin/professionals/${profId}/status`,
+          { status: newStatus },
+          { 
+            headers: { 
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        if (response.status === 200) {
+          await this.fetchProfessionals();
+          alert('Professional status updated successfully');
+        }
+      } catch (error) {
+        console.error('Error updating professional status:', error);
+        if (error.response?.status === 401) {
+          alert('Unauthorized access. Please login again.');
+          localStorage.clear();
+          this.$router.push('/login');
+        } else {
+          alert('Error updating status. Please try again later.');
+        }
+      }
+    },
+    async viewDocument(profId) {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(
+          `http://127.0.0.1:5000/admin/professionals/${profId}/document`, 
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            responseType: 'blob'
+          }
+        );
+        
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `document_${profId}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error('Error fetching document:', error);
+        alert('Error downloading document');
+      }
+    }
+  },
+  mounted() {
+    this.fetchProfessionals();
+  }
+};
+</script>
+
+<style scoped>
+.main-container {
+    background-color: #2d3748;
+  min-height: 100vh;
+  padding: 20px;
+  color: white;
+}
+
+.navigation-bar {
+  background: #2d3748;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+.nav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 15px;
+}
+
+.nav-buttons button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #444;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.nav-buttons button.active {
+  background: #0d6efd;
+  color: white;
+}
+
+.nav-buttons button.logout-btn {
+background: #dc3545 !important;
+  color: white !important;
+}
+
+.content-area {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.filters {
+    display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.filters input, .filters select {
+ padding: 10px;
+  border: 1px solid #4a5568;
+  border-radius: 8px;
+  background: #2d3748;
+  color: white;
+  flex: 1;
+}
+.search-input::placeholder {
+  color: #a0aec0;
+}
+.table-container {
+    background: #ffffff0d;
+  border-radius: 12px;
+  padding: 20px;
+  overflow-x: auto;
+}
+
+.professionals-table {
+  width: 250px;
+  border-collapse: collapse;
+  color: #e2e8f0;
+}
+
+.professionals-table th,
+.professionals-table td {
+  padding: 12px;
+  text-align: left;
+border-bottom: 1px solid #4a5568;
+}
+
+.status-pending {
+  color: #f6e05e;
+}
+
+.status-approved {
+  color: #5cb85c;
+}
+
+.status-blocked {
+  color: #d9534f;
+}
+
+button {
+ padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.approve-btn {
+  background-color: #5cb85c;
+}
+
+.block-btn {
+  background-color:  #f56565;
+}
+
+.unblock-btn {
+  background-color: #48bb78;
+}
+
+button:hover, .unblock-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.view-doc-btn {
+  padding: 6px 12px;
+  background-color: #4a5568;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.view-doc-btn:hover {
+  background-color: #2d3748;
+  transform: translateY(-1px);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 90%;
+  max-height: 90%;
+  overflow: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.close-modal {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #4a5568;
+}
+
+.document-image {
+  max-width: 100%;
+  height: auto;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.action-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  color: white;
+}
+
+.accept-btn {
+  background-color: #28a745;
+}
+
+.block-btn {
+  background-color: #dc3545;
+}
+
+.unblock-btn {
+  background-color: #17a2b8;
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  opacity: 0.9;
+}
+
+.professionals-table td {
+  padding: 12px;
+  vertical-align: middle;
+}
+</style>
+
+
+
+
+
+
+
+auth.py
+
+class UserLoginAPI(Resource):
+    def post(self):
+        data = request.get_json()
+        if not (data.get('email') and data.get('password')):
+            return {'message': 'Missing email or password'}, 400
+
+        user_from_db = User.query.filter_by(email=data['email']).first()
+        
+        if not user_from_db:
+            return {'message': 'User not found'}, 401
+
+        # Check if user is blocked or pending
+        if user_from_db.role == 'User':
+            customer = Customer.query.get(user_from_db.id)
+            if customer and customer.status == 'Blocked':
+                return {'message': 'Your account has been blocked. Please contact administrator.'}, 403
+        elif user_from_db.role == 'Professional':
+            professional = Professional.query.get(user_from_db.id)
+            if professional:
+                if professional.status == 'Blocked':
+                    return {'message': 'Your account has been blocked. Please contact administrator.'}, 403
+                elif professional.status == 'Pending':
+                    return {'message': 'Your account is currently under review. Please wait for admin approval.'}, 403
+
+        if check_password_hash(user_from_db.password, data['password']):
+            access_token = create_access_token(identity=data['email'], expires_delta=timedelta(days=2))
+            return {
+                'access_token': access_token,
+                'username': user_from_db.name,
+                'userrole': user_from_db.role
+            }, 200
+
+        return {'message': 'Incorrect credentials'}, 401
+
+login
+<template>
+    <div class="container">
+        <div class="login-form">
+            <h3>Login</h3>
+            <hr />
+            <form @submit.prevent="handleSubmit">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="text" v-model="email" class="form-control" placeholder="Enter your email" required />
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" v-model="password" class="form-control" placeholder="Enter your password" required />
+                </div>
+                <button type="submit" class="login-btn">Login</button>
+                <div class="register-options">
+                    <router-link to="/signup">
+                        <button type="button" class="register-btn user">Register as User</button>
+                    </router-link>
+                    <router-link to="/psignup">
+                        <button type="button" class="register-btn professional">Register as Professional</button>
+                    </router-link>
+                </div>
+            </form>
+        </div>
+    </div>
+</template>
+
+<script>
+import axios from "axios";
+
+export default {
+  name: "LoginPg",
+  data() {
+    return {
+      email: "",
+      password: "",
+    };
+  },
+  methods: {
+    async handleSubmit() {
+      try {
+        const response = await axios.post("http://127.0.0.1:5000/login", {
+          email: this.email,
+          password: this.password,
+        });
+
+        const { access_token, userrole } = response.data;
+
+        if (access_token && userrole) {
+          localStorage.setItem("token", access_token);
+          localStorage.setItem("userrole", userrole);
+          localStorage.setItem("email", this.email);
+
+          switch (userrole) {
+            case "Admin":
+              this.$router.push("/admin");
+              break;
+            case "User":
+              this.$router.push("/");
+              break;
+            case "Professional":
+              this.$router.push("/professional");
+              break;
+            default:
+              console.error("Unknown user role.");
+              alert("Unknown role. Please contact support.");
+          }
+        }
+      } catch (error) {
+        console.error("Login error:", error);
+        
+        if (error.response?.status === 403) {
+          alert(error.response.data.message);
+        } else if (error.response?.status === 401) {
+          alert("Invalid credentials. Please try again.");
+        } else {
+          alert("An error occurred. Please try again later.");
+        }
+      }
+    }
+  },
+  mounted() {
+    const token = localStorage.getItem("token");
+    const userrole = localStorage.getItem("userrole");
+
+    if (token) {
+      switch (userrole) {
+        case "Admin":
+          this.$router.push("/admin");
+          break;
+        case "User":
+          this.$router.push("/");
+          break;
+        case "Professional":
+          this.$router.push("/professional");
+          break;
+        default:
+          console.error("Invalid user role in localStorage.");
+      }
+    }
+  },
+};
+</script>
+
+<style>
+body {
+    background-color: #071228;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    color: white;
+}
+
+.container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.login-form {
+    background-color: #1a2942;  /* Changed to a slightly lighter shade of dark blue */
+    padding: 30px;
+    border-radius: 15px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.login-form label {
+    color: white;
+    font-weight: 500;
+    margin-bottom: 5px;
+    display: block;
+    text-align: left;
+}
+
+.login-form h3 {
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: white;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #2d4056;  /* Darker border color */
+    border-radius: 8px;
+    box-sizing: border-box;
+    margin-top: 5px;
+    background-color: #2d4056;  /* Slightly lighter than form background */
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #4299e1;
+    box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2);
+}
+
+.login-btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #4299e1;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+}
+
+.register-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.register-btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.register-btn.user {
+    background-color: #48bb78;  /* Green color */
+}
+
+.register-btn.professional {
+    background-color: #805ad5;  /* Purple color */
+}
+
+.login-btn:hover,
+.register-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.login-btn:hover {
+    background-color: #3182ce;
+}
+
+.register-btn.user:hover {
+    background-color: #38a169;
+}
+
+.register-btn.professional:hover {
+    background-color: #6b46c1;
+}
+
+</style>
+

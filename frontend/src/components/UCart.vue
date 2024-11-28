@@ -6,7 +6,8 @@
       <h3>{{ service.name }}</h3>
       
       <div class="quantity-section">
-        <label>Quantity:</label>
+        <label>Quantity :  </label>
+
         <input 
           type="number" 
           v-model.number="quantity" 
@@ -16,7 +17,7 @@
       </div>
       
       <div class="booking-date-section">
-        <label>Booking Date:</label>
+        <label>Booking Date :</label>
         <div class="date-options">
           <button 
             v-for="(date, index) in bookingDates" 
@@ -29,7 +30,7 @@
         </div>
       </div>
       <div class="time-slot-section">
-        <label>Time Slot:</label>
+        <label>Time Slot :</label>
         <div class="time-slots">
           <button 
             v-for="slot in timeSlots" 
@@ -41,9 +42,11 @@
           </button>
         </div>
       </div>
-      <div class="price-section">
-        <p>Base Price: {{ service.base_price }}</p>
-        <p>Total Price: {{ totalPrice }}</p>
+      <h4> Price : </h4>
+      <p>Hygienic Charges : ₹ 39</p>
+        <p>Base Price : ₹ {{ service.base_price }}</p>
+        <div class="price-section">
+        <p>Total Price : ₹ {{ totalPrice }}</p>
       </div>
       
       <button 
@@ -91,7 +94,7 @@ export default {
   methods: {
     calculateTotalPrice() {
       if (this.service) {
-        this.totalPrice = this.service.base_price * this.quantity;
+        this.totalPrice = this.service.base_price * this.quantity +39;
       }
     },
     generateBookingDates() {
@@ -155,19 +158,23 @@ export default {
   }
 };
 </script>
-
 <style scoped>
-/* Add these styles */
 .cart-container {
   padding: 20px;
   max-width: 800px;
   margin: 0 auto;
+  color: black; /* Ensure default text is black */
 }
 
 .service-details {
   background: #f8f9fa;
   padding: 20px;
   border-radius: 8px;
+  color: black; /* Make text black */
+}
+
+.cart-container h2 {
+  color: white; /* Set "Add Service to Cart" text color to white */
 }
 
 .quantity-section,
@@ -175,6 +182,7 @@ export default {
 .time-slot-section,
 .price-section {
   margin: 20px 0;
+  color: black; /* Ensure all section text is black */
 }
 
 .date-options,
@@ -208,10 +216,12 @@ input[type="number"] {
   border: 1px solid #ddd;
   border-radius: 4px;
   width: 80px;
+  color: black; /* Ensure input text is black */
 }
 
 .price-section {
   font-size: 1.2em;
   font-weight: bold;
+  color: black; /* Ensure price text is black */
 }
 </style>

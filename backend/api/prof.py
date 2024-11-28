@@ -29,7 +29,7 @@ class ProfessionalSignup(Resource):
 
             # Extract form data
             name = request.form['name']
-            email = request.form['email']
+            email = request.form['email'].lower()
             password = request.form['password']
             mobile_number = request.form['mobileNumber']
             pincodes = request.form['pincode'].split(',')  # Split comma-separated pincodes
@@ -99,8 +99,23 @@ class ProfessionalServiceRequests(Resource):
             if not professional:
                 return {"message": "Professional not found"}, 404
 
-            if professional.status != 'approved':
-                return {"message": "Account pending approval"}, 403
+            # Check if professional is blocked
+            if professional.status.lower() == 'blocked':
+                return {
+                    "message": "Your account has been blocked. Contact administrator for assistance.",
+                    "status": "blocked",
+                    "confirmed_requests": ServiceRequest.query
+                        .join(Service)
+                        .join(Customer)
+                        .filter(
+                            ServiceRequest.professional_id == professional.id,
+                            ServiceRequest.status == 'confirmed'
+                        ).all()
+                }, 403
+
+            # Get available service requests only if professional is approved
+            if professional.status.lower() != 'approved':
+                return {"message": "Your account is pending approval"}, 403
 
             # Convert professional's pincodes string to list
             available_pincodes = professional.get_pincodes()
@@ -135,7 +150,7 @@ class ProfessionalServiceRequests(Resource):
         except Exception as e:
             return {"message": f"Error fetching requests: {str(e)}"}, 500
 
-    @jwt_required()
+    @jwt_required
     def put(self):
         try:
             email = get_jwt_identity()
@@ -285,9 +300,159 @@ class ProfessionalActiveServices(Resource):
             db.session.rollback()
             return {"message": f"Error updating service status: {str(e)}"}, 500
 
+class ProfessionalRequests(Resource):
+    @jwt_required()
+    def get(self):
+        try:
+            email = get_jwt_identity()
+            professional = Professional.query.filter_by(email=email).first()
+            
+            if not professional:
+                return {"error": "Professional not found"}, 404
+
+            service_requests = ServiceRequest.query\
+                .join(Service)\
+                .join(Customer)\
+                .filter(ServiceRequest.professional_id == professional.id)\
+                .all()
+
+            return jsonify([{
+                'id': req.id,
+                'service_name': req.service.name,
+                'customer_name': req.customer.name,
+                'customer_phone': req.customer.mobile_number,
+                'booking_date': req.booking_date.strftime("%Y-%m-%d"),
+                'time_slot': req.time_slot,
+                'status': req.status,
+                'rating': req.rating,
+                'total_price': float(req.total_price)
+            } for req in service_requests])
+
+        except Exception as e:
+            return {"error": str(e)}, 500
+
+    @jwt_required()
+    def put(self, request_id, action=None):
+        try:
+            email = get_jwt_identity()
+            professional = Professional.query.filter_by(email=email).first()
+            
+            if not professional:
+                return {"error": "Professional not found"}, 404
+
+            service_request = ServiceRequest.query.get(request_id)
+            
+            if not service_request or service_request.professional_id != professional.id:
+                return {"error": "Service request not found"}, 404
+
+            if action == 'accept':
+                if service_request.status != 'pending':
+                    return {"error": "Can only accept pending requests"}, 400
+                service_request.status = 'confirmed'
+            elif action == 'complete':
+                if service_request.status != 'confirmed':
+                    return {"error": "Can only complete confirmed requests"}, 400
+                service_request.status = 'completed'
+            
+            db.session.commit()
+            return {"message": f"Service request {action}ed successfully"}
+
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+
+class ProfessionalSummary(Resource):
+    @jwt_required()
+    def get(self):
+        try:
+            email = get_jwt_identity()
+            professional = Professional.query.filter_by(email=email).first()
+            
+            if not professional:
+                return {"error": "Professional not found"}, 404
+
+            # Get status distribution
+            status_stats = db.session.query(
+                ServiceRequest.status,
+                func.count(ServiceRequest.id)
+            ).filter(ServiceRequest.professional_id == professional.id)\
+            .group_by(ServiceRequest.status)\
+            .all()
+
+            # Get monthly earnings
+            monthly_earnings = db.session.query(
+                func.strftime('%Y-%m', ServiceRequest.booking_date).label('month'),
+                func.sum(ServiceRequest.total_price)
+            ).filter(
+                ServiceRequest.professional_id == professional.id,
+                ServiceRequest.status == 'completed'
+            ).group_by('month').all()
+
+            # Get rating distribution
+            rating_distribution = db.session.query(
+                ServiceRequest.rating,
+                func.count(ServiceRequest.id)
+            ).filter(
+                ServiceRequest.professional_id == professional.id,
+                ServiceRequest.rating.isnot(None)
+            ).group_by(ServiceRequest.rating).all()
+
+            # Get pincode stats
+            pincode_stats = db.session.query(
+                ServiceRequest.service_pincode,
+                func.count(ServiceRequest.id)
+            ).filter(
+                ServiceRequest.professional_id == professional.id,
+                ServiceRequest.status == 'completed'
+            ).group_by(ServiceRequest.service_pincode).all()
+
+            return {
+                'status_stats': dict(status_stats),
+                'monthly_earnings': dict(monthly_earnings),
+                'rating_distribution': dict(rating_distribution),
+                'pincode_stats': dict(pincode_stats)
+            }
+
+        except Exception as e:
+            return {"error": str(e)}, 500
+
+class ProfessionalStats(Resource):
+    @jwt_required()
+    def get(self):
+        try:
+            email = get_jwt_identity()
+            professional = Professional.query.filter_by(email=email).first()
+            
+            if not professional:
+                return {"error": "Professional not found"}, 404
+
+            # Calculate total earnings
+            total_earnings = db.session.query(
+                func.sum(ServiceRequest.total_price)
+            ).filter(
+                ServiceRequest.professional_id == professional.id,
+                ServiceRequest.status == 'completed'
+            ).scalar() or 0
+
+            # Overall rating is already stored in professional.ratings
+            overall_rating = professional.ratings or 0
+
+            return {
+                "overall_rating": float(overall_rating),
+                "total_earnings": float(total_earnings)
+            }
+
+        except Exception as e:
+            return {"error": str(e)}, 500
 
 # Register API resources
 api.add_resource(ProfessionalSignup, '/professional/signup')
 api.add_resource(ProfessionalServiceRequests, '/professional/service-requests')
 api.add_resource(ProfessionalProfile, '/professional/profile')
 api.add_resource(ProfessionalActiveServices, '/professional/active-services')
+api.add_resource(ProfessionalRequests, 
+    '/professional/requests',
+    '/professional/requests/<int:request_id>/<string:action>'
+)
+api.add_resource(ProfessionalSummary, '/professional/summary')
+api.add_resource(ProfessionalStats, '/professional/stats')

@@ -8,20 +8,40 @@ from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from application.models import User
 
-
+from instance.mail import mail
+from instance.caches import cache
+from instance.celery import celeryservice
 
 def create_app():
     app.config.from_object(Config)
+    celeryservice.conf.broker_url = app.config["CELERY_BROKER_URL"]
+    celeryservice.conf.result_backend = app.config["CELERY_RESULT_BACKEND"]
+    celeryservice.conf.enable_utc = app.config["ENABLE_UTC"]
+    celeryservice.conf.timezone = app.config["TIMEZONE"]
+    class ContextTask(celeryservice.Task):
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return self.run(*args, **kwargs)
+    celeryservice.Task = ContextTask
+
     db.init_app(app)
     api.init_app(app)
     CORS(app)
-    jwt = JWTManager(app)
-    return app
+    JWTManager(app)
+    mail.init_app(app)
+    cache.init_app(app)
+
+    app.app_context().push()
+    
+    print("returning celery service")
+    return celeryservice
+    
 
 
 
 def initialise_database():
     with app.app_context():
+        from instance.caches import cache
         inspector = db.inspect(db.engine)
         table_names = inspector.get_table_names()
 

@@ -3,11 +3,13 @@ from instance.app import app
 from dotenv import load_dotenv
 from utils.configuration import create_app , initialise_database 
 from flask import Flask, request, jsonify
-import api
+from flask_jwt_extended import  jwt_required, get_jwt_identity
+from instance.caches import cache
+
 
 import api
 load_dotenv()
-app = create_app()
+celeryservice = create_app()
 initialise_database()
 
 

@@ -9,6 +9,7 @@ from datetime import timedelta, datetime
 from sqlalchemy import func   
 import os
 from werkzeug.utils import secure_filename
+from utils.mail import send_registration_email, send_professional_status_update
 
 ALLOWED_EXTENSIONS = {'pdf', 'jpg', 'jpeg', 'png', 'txt', 'docx'}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
@@ -82,6 +83,14 @@ class ProfessionalSignup(Resource):
 
             db.session.add(professional)
             db.session.commit()
+            
+            # Send registration email
+            send_registration_email.delay(
+                'Professional',
+                professional.name,
+                professional.email,
+                professional.mobile_number
+            )
             
             return {"message": "Professional registration successful. Pending admin approval."}, 201
 

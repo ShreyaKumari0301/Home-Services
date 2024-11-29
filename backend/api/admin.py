@@ -10,6 +10,7 @@ from flask_jwt_extended import jwt_required
 from utils.role_required import role_required   
 from flask_jwt_extended import get_jwt_identity
 import io
+from utils.mail import send_professional_status_update
 from flask import current_app as app
 from sqlalchemy.sql import func
 
@@ -145,6 +146,13 @@ class ProfessionalManagement(Resource):
                 
             professional.status = new_status
             db.session.commit()
+            
+            # Send status update email
+            send_professional_status_update.delay(
+                professional.name,
+                professional.email,
+                new_status
+            )
             
             return {'message': 'Status updated successfully'}, 200
         except Exception as e:

@@ -1,6 +1,6 @@
-Show-Ticketing
-Local Project Setup
-Prerequisites:
+**Home-Services Local Project Setup**
+
+#Prerequisites:
 
 Git: Ensure you have Git installed. If not, download and install it from https://git-scm.com/.
 
@@ -23,7 +23,7 @@ Replace <your-github-username> with your actual GitHub username.
 Navigate to the Project Folder:
 
 Use the cd command to move into the project folder:
-cd SHome-Servicess
+cd mad2project/Home-Services
 Backend Setup:
 Edit the .env File:
 

@@ -1,6 +1,7 @@
-**Home-Services Local Project Setup**
+**Home-Services**
+This repository contains the code for a full-stack web application that allows users to book a variety of home services such as plumbing, electrical work, cleaning, and maintenance. The application has been built with **Flask** for the backend and **Vue.js** for the frontend, providing a seamless and user-friendly experience for both customers and service providers.
 
-#Prerequisites:
+#Local Development Setup:
 
 Git: Ensure you have Git installed. If not, download and install it from https://git-scm.com/.
 
@@ -12,22 +13,15 @@ Redis: Install and start Redis, which is required for certain backend features. 
 
 Steps:
 
-Fork the Repository:
-
-Click the "Fork" button on the GitHub repository page to create a copy of the project under your GitHub account.
 Clone the Repository:
+   ```bash
+   git clone https://github.com/<yourusername>/Home-Services-Booking.git
+```
 
-Open your terminal and run the following command to clone the repository to your local machine:
-git clone https://github.com/<your-github-username>/Home-Services.git
-Replace <your-github-username> with your actual GitHub username.
 Navigate to the Project Folder:
-
-Use the cd command to move into the project folder:
-cd mad2project/Home-Services
+```cd mad2project/Home-Services```
 Backend Setup:
-Edit the .env File:
 
-Inside the project folder, navigate to the backend directory, and edit the .env file. Configure any necessary environment variables.
 Create a Virtual Environment:
 
 In the backend folder, create a virtual environment with the following command:
@@ -36,9 +30,9 @@ Activate the Virtual Environment:
 
 Activate the virtual environment based on your operating system:
 On Linux:
-source venv/bin/activate
+```source venv/bin/activate```
 On Windows:
-.\venv\Scripts\activate
+```.\venv\Scripts\activate```
 Install Backend Dependencies:
 
 Install the required Python packages using pip:

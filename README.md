@@ -15,7 +15,7 @@ Steps:
 
 Clone the Repository:
    ```bash
-   git clone https://github.com/<yourusername>/Home-Services-Booking.git
+   git clone https://github.com/<yourusername>/Home-Services.git
 ```
 
 Navigate to the Project Folder:

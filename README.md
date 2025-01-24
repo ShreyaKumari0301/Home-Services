@@ -26,7 +26,8 @@ Create a Virtual Environment:
 
 In the backend folder, create a virtual environment with the following command:
 ```bash 
-python3 -m venv venv```
+python3 -m venv venv
+```
 
 Activate the Virtual Environment:
 
@@ -38,22 +39,30 @@ On Windows:
 Install Backend Dependencies:
 
 Install the required Python packages using pip:
+```bash
 pip install -r requirements.txt
+```
 Start the Backend Server:
 
 Run the backend server using:
+```bash
 python main.py
+```
 Install and Start Redis:
 
 If Redis is not already installed, download and install it from https://redis.io/download, and start the Redis server.
 Run Celery Worker (Linux/Windows Subsystem for Linux):
 
 In the backend folder, use the following command to run the Celery worker:
+```bash
 celery -A main.celeryservice worker --loglevel=INFO
+```
 Run Celery Beat (Linux/Windows Subsystem for Linux):
 
 To run Celery Beat for task scheduling, use the following command:
+```bash
 celery -A main.celeryservice beat --loglevel=INFO
+```
 Frontend Setup:
 Navigate to the Frontend Directory:
 
@@ -61,11 +70,15 @@ In your terminal, navigate to the frontend directory within the project folder.
 Install Frontend Dependencies:
 
 Install the required Node.js packages by running:
+```bash
 npm install
+```
 Run the Application:
 
 Start the frontend application by running:
+```bash
 npm run dev
+```
 You're now ready to use the Home-Services application locally. Access it in your web browser at http://localhost:8080/.
 
 ## Contributing

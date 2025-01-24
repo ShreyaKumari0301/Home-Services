@@ -25,7 +25,9 @@ Backend Setup:
 Create a Virtual Environment:
 
 In the backend folder, create a virtual environment with the following command:
-python3 -m venv venv
+```bash 
+python3 -m venv venv```
+
 Activate the Virtual Environment:
 
 Activate the virtual environment based on your operating system:

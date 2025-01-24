@@ -1,7 +1,7 @@
 **Home-Services**
 This repository contains the code for a full-stack web application that allows users to book a variety of home services such as plumbing, electrical work, cleaning, and maintenance. The application has been built with **Flask** for the backend and **Vue.js** for the frontend, providing a seamless and user-friendly experience for both customers and service providers.
 
-#Local Development Setup:
+# Local Development Setup:
 
 Git: Ensure you have Git installed. If not, download and install it from https://git-scm.com/.
 
@@ -66,4 +66,19 @@ Start the frontend application by running:
 npm run dev
 You're now ready to use the Home-Services application locally. Access it in your web browser at http://localhost:8080/.
 
-Enjoy using the application for booking show tickets, and happy coding!
+## Contributing
+Contributions are welcome! If you'd like to improve this project, please:
+
+Fork the repository.
+Create a new branch.
+Submit a pull request.
+
+## License
+This project is licensed under the MIT License.
+
+## Contact
+Author: Shreya Kumari
+Email: 23f2003785@ds.study.iitm.ac.in
+GitHub: shreyakumari0301
+
+Enjoy using the application for booking Home Services, and happy coding!
